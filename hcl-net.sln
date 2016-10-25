@@ -1,9 +1,16 @@
-
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
 VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "hcl-net", "hcl-net.csproj", "{AAC0129D-7513-4DCC-B374-C5424DE3A964}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{43F379D3-58A1-4891-91BB-2D27EE0B6510}"
+	ProjectSection(SolutionItems) = preProject
+		LICENSE = LICENSE
+		README.md = README.md
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "hcl-net.Test", "hcl-net.Test\hcl-net.Test.csproj", "{1E48AFB6-5B9E-4904-8AD9-22C3C69F96AA}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +22,10 @@ Global
 		{AAC0129D-7513-4DCC-B374-C5424DE3A964}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{AAC0129D-7513-4DCC-B374-C5424DE3A964}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{AAC0129D-7513-4DCC-B374-C5424DE3A964}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1E48AFB6-5B9E-4904-8AD9-22C3C69F96AA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1E48AFB6-5B9E-4904-8AD9-22C3C69F96AA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1E48AFB6-5B9E-4904-8AD9-22C3C69F96AA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1E48AFB6-5B9E-4904-8AD9-22C3C69F96AA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
