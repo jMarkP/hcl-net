@@ -1,0 +1,11 @@
+version: 0.0.{build}
+
+build:
+  project: hcl-net.sln
+
+test:
+  assemblies:
+    - '**/*.test.dll'
+
+before_build:
+  - nuget restore hcl-net.sln
