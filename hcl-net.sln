@@ -6,6 +6,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "hcl-net", "hcl-net.csproj",
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{43F379D3-58A1-4891-91BB-2D27EE0B6510}"
 	ProjectSection(SolutionItems) = preProject
+		afterTests.cmd = afterTests.cmd
 		appveyor.yml = appveyor.yml
 		LICENSE = LICENSE
 		README.md = README.md
