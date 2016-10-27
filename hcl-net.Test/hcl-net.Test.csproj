@@ -50,8 +50,9 @@
     <Otherwise />
   </Choose>
   <ItemGroup>
-    <Compile Include="HclQuoteUtilTests.cs" />
-    <Compile Include="PosTests.cs" />
+    <Compile Include="Parser\HCL\TokenTests.cs" />
+    <Compile Include="Utilities\HclStringUtilitiesTests.cs" />
+    <Compile Include="Parser\HCL\PosTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -62,6 +63,9 @@
       <Project>{AAC0129D-7513-4DCC-B374-C5424DE3A964}</Project>
       <Name>hcl-net</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Utilities\InvalidStrings.txt" />
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">

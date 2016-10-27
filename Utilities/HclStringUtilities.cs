@@ -4,9 +4,9 @@ using System.Text;
 
 namespace hcl_net.Utilities
 {
-    public static class HclQuoteUtil
+    public static class HclStringUtilities
     {
-        public static string Unquote(string s, out string error)
+        public static string UnquoteHclString(this string s, out string error)
         {
             var n = s.Length;
             if (n < 2)
@@ -167,7 +167,9 @@ namespace hcl_net.Utilities
                 case '5':
                 case '6':
                 case '7':
-                    return ConvertFromNumberToChar(s, 8, ref i, out error, 2);
+                    // Rewind one char so the Convert function below will see 'c' again
+                    i--;
+                    return ConvertFromNumberToChar(s, 8, ref i, out error, 3);
                 // Misc
                 case '\\':
                     error = null;
@@ -199,15 +201,15 @@ namespace hcl_net.Utilities
             try
             {
                 v = Convert.ToUInt32(s.Substring(i, n), @base);
+                i += n;
+                error = null;
+                return char.ConvertFromUtf32((int)v);
             }
             catch (Exception ex)
             {
                 error = "Error reading hex string: " + ex.Message;
                 return null;
             }
-            i += n;
-            error = null;
-            return char.ConvertFromUtf32((int)v);
         }
     }
 }

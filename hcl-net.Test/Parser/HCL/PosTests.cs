@@ -1,8 +1,7 @@
-﻿using System;
-using hcl_net.Parser.HCL;
+﻿using hcl_net.Parser.HCL;
 using NUnit.Framework;
 
-namespace hcl_net.Test
+namespace hcl_net.Test.Parser.HCL
 {
     [TestFixture]
     public class PosTests

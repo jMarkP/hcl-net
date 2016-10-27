@@ -45,7 +45,7 @@
     <Compile Include="Parser\HCL\Token.cs" />
     <Compile Include="Parser\HCL\TokenType.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Utilities\HclQuoteUtil.cs" />
+    <Compile Include="Utilities\HclStringUtilities.cs" />
   </ItemGroup>
   <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

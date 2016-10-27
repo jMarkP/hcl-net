@@ -1,27 +1,35 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Reflection;
 using hcl_net.Utilities;
-using NUnit.Framework.Internal;
 using NUnit.Framework;
 
-namespace hcl_net.Test
+namespace hcl_net.Test.Utilities
 {
     [TestFixture]
-    class HclQuoteUtilTests
+    class HclStringUtilitiesTests
     {
         [TestCaseSource("Unquote")]
-        public void TestUnquote(KeyValuePair<string, string> testCase)
+        public void Unquote_ProcessesStringsCorrectly(KeyValuePair<string, string> testCase)
         {
             var input = testCase.Key;
             var expected = testCase.Value;
 
             string error;
-            var actual = HclQuoteUtil.Unquote(input, out error);
+            var actual = input.UnquoteHclString(out error);
             Assert.That(error, Is.Null);
             Assert.That(actual, Is.EqualTo(expected));
+        }
+
+        [TestCaseSource("InvalidStrings")]
+        public void Unquote_RejectsInvalidStrings(string invalidString)
+        {
+            string error;
+            var result = invalidString.UnquoteHclString(out error);
+            Assert.That(result, Is.EqualTo(string.Empty));
+            Assert.That(result, Is.Not.Null);
         }
 
         private static KeyValuePair<string, string>[] Unquote()
@@ -34,7 +42,7 @@ namespace hcl_net.Test
                 {@"""☺""", "☺"},
                 {@"""hello world""", "hello world"},
                 {@"""\xFF""", "\xFF"},
-                //{@"""\377""", "\0377"},
+                {@"""\377""", "\xFF"},
                 {@"""\u1234""", "\u1234"},
                 {@"""\U00010111""", "\U00010111"},
                 {@"""\U0001011111""", "\U0001011111"},
@@ -45,7 +53,26 @@ namespace hcl_net.Test
                 {@"""echo ${var.region}${element(split("","",var.zones),0)}""",
                     "echo ${var.region}${element(split(\",\",var.zones),0)}"},
                 {@"""${HH\\:mm\\:ss}""", "${HH\\:mm\\:ss}"},
+                {@"""\a\b\f\r\n\t\v""", "\a\b\f\r\n\t\v" },
+                {@"""\\""", "\\" },
+                {@"""abc\xffdef""", "abc\x00ffdef" },
+                {@"""\u263a""", "\u263a" },
+                {@"""\U0010ffff""","\U0010ffff"},
+                {@"""\x04""", "\x04"}
             }.Select(x => new KeyValuePair<string, string>(x.Key, x.Value)).ToArray();
+        }
+
+        private static string[] InvalidStrings()
+        {
+            using (var stream = typeof(HclStringUtilitiesTests).Assembly.GetManifestResourceStream("hcl_net.Test.Utilities.InvalidStrings.txt"))
+            using (StreamReader reader = new StreamReader(stream))
+            {
+                return reader.ReadToEnd()
+                    .Split(new []{"\r\n" }, StringSplitOptions.None)
+                    .Select(x => x.Replace(@"\n", "\n"))
+                    .ToArray();
+            }
+
         }
     }
 }
