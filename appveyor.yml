@@ -9,7 +9,7 @@ test:
 
 environment:
   COVERALLS_REPO_TOKEN:
-	secure: CcUyxvaPcCQh89KGlXgi+gDAL6oSVULRZvQ6p23sG+kV3N7ipUz8jho+e4jk9rVo
+    secure: CcUyxvaPcCQh89KGlXgi+gDAL6oSVULRZvQ6p23sG+kV3N7ipUz8jho+e4jk9rVo
 
 before_build:
   - nuget restore hcl-net.sln
