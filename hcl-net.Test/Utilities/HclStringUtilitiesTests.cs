@@ -23,13 +23,21 @@ namespace hcl_net.Test.Utilities
             Assert.That(actual, Is.EqualTo(expected));
         }
 
-        [TestCaseSource("InvalidStrings")]
-        public void Unquote_RejectsInvalidStrings(string invalidString)
+        [Test]
+        public void Unquote_RejectsInvalidStrings()
+        {
+            foreach (var invalidString in InvalidStrings())
+            {
+                TestInvalidString(invalidString);
+            }
+        }
+
+        private static void TestInvalidString(string invalidString)
         {
             string error;
             var result = invalidString.UnquoteHclString(out error);
-            Assert.That(result, Is.EqualTo(string.Empty));
-            Assert.That(result, Is.Not.Null);
+            Assert.That(result, Is.EqualTo(string.Empty), invalidString);
+            Assert.That(result, Is.Not.Null, invalidString);
         }
 
         private static KeyValuePair<string, string>[] Unquote()
