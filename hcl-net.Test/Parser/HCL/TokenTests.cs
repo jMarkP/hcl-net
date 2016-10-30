@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using hcl_net.Parser.HCL;
+﻿using hcl_net.Parser.HCL;
 using NUnit.Framework;
 
 namespace hcl_net.Test.Parser.HCL

@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace hcl_net.Parser.HCL
+﻿namespace hcl_net.Parser.HCL
 {
     internal struct Pos
     {
