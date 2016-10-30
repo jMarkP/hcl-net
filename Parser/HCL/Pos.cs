@@ -2,7 +2,7 @@
 
 namespace hcl_net.Parser.HCL
 {
-    internal class Pos
+    internal struct Pos
     {
         private readonly string _filename;
         private readonly int _offset;
@@ -24,6 +24,25 @@ namespace hcl_net.Parser.HCL
         public int Line { get { return _line; } }
 
         public int Column { get { return _column; } }
+
+        public static Pos CreateForFile(string filename)
+        {
+            return new Pos(filename, 0, 1, 0);
+        }
+        public Pos NextInString(string src, out char c)
+        {
+            // Implement Next() as Peek() + Advance
+            c = PeekInString(src);
+            return new Pos(Filename, Offset + 1, 
+                c == '\n' ? Line + 1 : Line,
+                c == '\n' ? 0 : Column + 1);
+        }
+
+        public char PeekInString(string src)
+        {
+            var eof = Offset >= src.Length;
+            return eof ? '\0' : src[Offset];
+        }
 
         public bool IsValid()
         {

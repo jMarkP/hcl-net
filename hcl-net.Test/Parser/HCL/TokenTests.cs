@@ -24,7 +24,7 @@ namespace hcl_net.Test.Parser.HCL
         [TestCase(TokenType.HEREDOC, "<<-EOF\n\t\t foo\n\tbar\n\t\t EOF", "\t\t foo\n\tbar\n")]
         public void TestTokenValue(TokenType type, string text, object value)
         {
-            var SUT = new Token(type, null, text, false);
+            var SUT = new Token(type, new Pos(), text, false);
             Assert.That(SUT.Value, Is.EqualTo(value));
         }
     }

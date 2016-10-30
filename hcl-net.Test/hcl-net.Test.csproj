@@ -50,6 +50,7 @@
     <Otherwise />
   </Choose>
   <ItemGroup>
+    <Compile Include="Parser\HCL\ScannerTests.cs" />
     <Compile Include="Parser\HCL\TokenTests.cs" />
     <Compile Include="Utilities\HclStringUtilitiesTests.cs" />
     <Compile Include="Parser\HCL\PosTests.cs" />
