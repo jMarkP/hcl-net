@@ -40,6 +40,16 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Parser\HCL\AST\Comment.cs" />
+    <Compile Include="Parser\HCL\AST\CommentGroup.cs" />
+    <Compile Include="Parser\HCL\AST\File.cs" />
+    <Compile Include="Parser\HCL\AST\INode.cs" />
+    <Compile Include="Parser\HCL\AST\ListType.cs" />
+    <Compile Include="Parser\HCL\AST\LiteralType.cs" />
+    <Compile Include="Parser\HCL\AST\ObjectItem.cs" />
+    <Compile Include="Parser\HCL\AST\ObjectKey.cs" />
+    <Compile Include="Parser\HCL\AST\ObjectList.cs" />
+    <Compile Include="Parser\HCL\AST\ObjectType.cs" />
     <Compile Include="Parser\HCL\Pos.cs" />
     <Compile Include="Parser\HCL\Scanner.cs" />
     <Compile Include="Parser\HCL\Token.cs" />

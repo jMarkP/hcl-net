@@ -17,24 +17,17 @@ namespace hcl_net.Parser.HCL
         /// Current position in the source
         /// </summary>
         private Pos srcPos;
+
         /// <summary>
         /// Previous position - used for peek()
         /// </summary>
         private Pos prevPos;
 
         /// <summary>
-        /// Length of the last char in bytes
-        /// </summary>
-        private int lastCharLen;
-        /// <summary>
-        /// Length of the last line in characters
-        /// </summary>
-        private int lastLineLen;
-
-        /// <summary>
         /// Token text start position
         /// </summary>
         private int tokenStart;
+
         /// <summary>
         /// Token text end position
         /// </summary>
