@@ -18,7 +18,8 @@ namespace hcl_net.Parser.HCL.AST
         /// <summary>
         /// The items in the list
         /// </summary>
-        public ObjectItem[] Items { get; }
+        public ObjectItem[] Items {
+            get { return _items; } }
         
         /// <summary>
         /// Filter filters out the objects with the given key list as a prefix.

@@ -69,5 +69,31 @@
             }
             return string.IsNullOrEmpty(s) ? "-" : s;
         }
+
+        public bool Equals(Pos other)
+        {
+            return string.Equals(_filename, other._filename) 
+                && _offset == other._offset 
+                && _line == other._line 
+                && _column == other._column;
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (ReferenceEquals(null, obj)) return false;
+            return obj is Pos && Equals((Pos) obj);
+        }
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                var hashCode = (_filename != null ? _filename.GetHashCode() : 0);
+                hashCode = (hashCode*397) ^ _offset;
+                hashCode = (hashCode*397) ^ _line;
+                hashCode = (hashCode*397) ^ _column;
+                return hashCode;
+            }
+        }
     }
 }
