@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace hcl_net.Parser.HCL.AST
@@ -10,12 +11,12 @@ namespace hcl_net.Parser.HCL.AST
     {
         private readonly Pos _lbrace;
         private readonly Pos _rbrace;
-        private readonly ObjectList[] _list;
+        private ObjectList _list;
 
-        public ObjectType(Pos lbrace, IEnumerable<ObjectList> list, Pos rbrace)
+        public ObjectType(Pos lbrace, ObjectList list, Pos rbrace)
         {
             _lbrace = lbrace;
-            _list = list.ToArray();
+            _list = list;
             _rbrace = rbrace;
         }
 
@@ -38,7 +39,7 @@ namespace hcl_net.Parser.HCL.AST
         /// <summary>
         /// The elements in lexical order
         /// </summary>
-        public INode[] List
+        public ObjectList List
         {
             get { return _list; }
         }
@@ -49,6 +50,27 @@ namespace hcl_net.Parser.HCL.AST
             {
                 return Lbrace;
             }
+        }
+
+        public INode Walk(WalkFunc fn)
+        {
+            // Visit this node
+            INode rewritten;
+            if (!fn(this, out rewritten))
+            {
+                return rewritten;
+            }
+            var objectType = rewritten as ObjectType;
+            if (objectType == null)
+                throw new InvalidOperationException("Walk function returned wrong type");
+
+            // Visit the child node of this node
+            objectType._list = (ObjectList)objectType._list.Walk(fn);
+
+            INode _;
+            fn(null, out _);
+
+            return objectType;
         }
     }
 }

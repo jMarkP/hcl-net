@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace hcl_net.Parser.HCL.AST
@@ -11,7 +12,7 @@ namespace hcl_net.Parser.HCL.AST
     {
         private readonly ObjectKey[] _keys;
         private readonly Pos _assign;
-        private readonly INode _val;
+        private INode _val;
         private readonly CommentGroup _leadComment;
         private readonly CommentGroup _lineComment;
 
@@ -83,6 +84,34 @@ namespace hcl_net.Parser.HCL.AST
         {
             return new ObjectItem(Keys.Skip(prefixLength),
                 Assign, Val, LeadComment, LineComment);
+        }
+
+        public INode Walk(WalkFunc fn)
+        {
+            // Visit this node
+            INode rewritten;
+            if (!fn(this, out rewritten))
+            {
+                return rewritten;
+            }
+            var objectItem = rewritten as ObjectItem;
+            if (objectItem == null)
+                throw new InvalidOperationException("Walk function returned wrong type");
+
+            // Visit the child nodes of this node
+            for (int i = 0; i < objectItem.Keys.Length; i++)
+            {
+                objectItem.Keys[i] = (ObjectKey)objectItem.Keys[i].Walk(fn);
+            }
+            if (objectItem.Val != null)
+            {
+                objectItem._val = objectItem._val.Walk(fn);
+            }
+
+            INode _;
+            fn(null, out _);
+
+            return objectItem;
         }
     }
 }

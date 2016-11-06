@@ -24,5 +24,18 @@
         {
             get { return Token.Pos; }
         }
+
+        public INode Walk(WalkFunc fn)
+        {
+            // Visit this node
+            INode rewritten;
+            if (!fn(this, out rewritten))
+            {
+                return rewritten;
+            }
+            INode _;
+            fn(null, out _);
+            return rewritten;
+        }
     }
 }

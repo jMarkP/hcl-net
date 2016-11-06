@@ -91,5 +91,29 @@ namespace hcl_net.Parser.HCL.AST
                     : default(Pos);
             }
         }
+
+        public INode Walk(WalkFunc fn)
+        {
+            // Visit this node
+            INode rewritten;
+            if (!fn(this, out rewritten))
+            {
+                return rewritten;
+            }
+            var objectList = rewritten as ObjectList;
+            if (objectList == null)
+                throw new InvalidOperationException("Walk function returned wrong type");
+
+            // Visit the child nodes of this node
+            for (int i = 0; i < objectList.Items.Length; i++)
+            {
+                objectList.Items[i] = (ObjectItem)objectList.Items[i].Walk(fn);
+            }
+
+            INode _;
+            fn(null, out _);
+
+            return objectList;
+        }
     }
 }

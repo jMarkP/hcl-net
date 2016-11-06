@@ -31,5 +31,10 @@ namespace hcl_net.Parser.HCL.AST
         {
             get { return List[0].Pos; }
         }
+
+        public INode Walk(WalkFunc fn)
+        {
+            throw new System.NotSupportedException();
+        }
     }
 }

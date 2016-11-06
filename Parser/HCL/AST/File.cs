@@ -1,11 +1,13 @@
-﻿namespace hcl_net.Parser.HCL.AST
+﻿using System;
+
+namespace hcl_net.Parser.HCL.AST
 {
     /// <summary>
     /// File is a single HCL file
     /// </summary>
     class File : INode
     {
-        private readonly INode _node;
+        private INode _node;
         private readonly CommentGroup[] _comments;
 
         public File(INode node, CommentGroup[] comments)
@@ -33,6 +35,27 @@
         public Pos Pos
         {
             get { return Node.Pos; }
+        }
+
+        public INode Walk(WalkFunc fn)
+        {
+            // Visit this node
+            INode rewritten;
+            if (!fn(this, out rewritten))
+            {
+                return rewritten;
+            }
+            var file = rewritten as File;
+            if (file == null)
+                throw new InvalidOperationException("Walk function returned wrong type");
+
+            // Visit the child node of this node
+            file._node = file.Node.Walk(fn);
+            
+            INode _;
+            fn(null, out _);
+
+            return file;
         }
     }
 }

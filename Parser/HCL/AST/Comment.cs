@@ -31,5 +31,10 @@
         {
             get { return Start; }
         }
+
+        public INode Walk(WalkFunc fn)
+        {
+            throw new System.NotSupportedException();
+        }
     }
 }

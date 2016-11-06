@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace hcl_net.Parser.HCL.AST
@@ -49,6 +50,30 @@ namespace hcl_net.Parser.HCL.AST
             {
                 return Lbrack;
             }
+        }
+
+        public INode Walk(WalkFunc fn)
+        {
+            // Visit this node
+            INode rewritten;
+            if (!fn(this, out rewritten))
+            {
+                return rewritten;
+            }
+            var listType = rewritten as ListType;
+            if (listType == null)
+                throw new InvalidOperationException("Walk function returned wrong type");
+
+            // Visit the child nodes of this node
+            for (int i = 0; i < listType.List.Length; i++)
+            {
+                listType.List[i] = listType.List[i].Walk(fn);
+            }
+
+            INode _;
+            fn(null, out _);
+
+            return listType;
         }
     }
 }
