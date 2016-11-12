@@ -50,6 +50,7 @@
     <Compile Include="Parser\HCL\AST\ObjectKey.cs" />
     <Compile Include="Parser\HCL\AST\ObjectList.cs" />
     <Compile Include="Parser\HCL\AST\ObjectType.cs" />
+    <Compile Include="Parser\HCL\Parser.cs" />
     <Compile Include="Parser\HCL\Pos.cs" />
     <Compile Include="Parser\HCL\Scanner.cs" />
     <Compile Include="Parser\HCL\Token.cs" />
