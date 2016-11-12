@@ -1,13 +1,10 @@
-﻿using System.Text;
-using System.Threading.Tasks;
-
-namespace hcl_net.Parser.HCL.AST
+﻿namespace hcl_net.Parse.HCL.AST
 {
     class LiteralType : INode
     {
         private readonly Token _token;
-        private readonly CommentGroup _leadComment;
-        private readonly CommentGroup _lineComment;
+        private CommentGroup _leadComment;
+        private CommentGroup _lineComment;
 
         public LiteralType(Token token, CommentGroup leadComment, CommentGroup lineComment)
         {
@@ -30,6 +27,7 @@ namespace hcl_net.Parser.HCL.AST
         public CommentGroup LeadComment
         {
             get { return _leadComment; }
+            set { _leadComment = value; }
         }
 
         /// <summary>
@@ -38,6 +36,7 @@ namespace hcl_net.Parser.HCL.AST
         public CommentGroup LineComment
         {
             get { return _lineComment; }
+            set { _lineComment = value; }
         }
 
         public Pos Pos

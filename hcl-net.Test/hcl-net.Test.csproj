@@ -50,12 +50,13 @@
     <Otherwise />
   </Choose>
   <ItemGroup>
-    <Compile Include="Parser\HCL\AST\ObjectListTests.cs" />
-    <Compile Include="Parser\HCL\AST\WalkTest.cs" />
-    <Compile Include="Parser\HCL\ScannerTests.cs" />
-    <Compile Include="Parser\HCL\TokenTests.cs" />
+    <Compile Include="Parse\HCL\AST\ObjectListTests.cs" />
+    <Compile Include="Parse\HCL\AST\WalkTest.cs" />
+    <Compile Include="Parse\HCL\ParserTests.cs" />
+    <Compile Include="Parse\HCL\ScannerTests.cs" />
+    <Compile Include="Parse\HCL\TokenTests.cs" />
     <Compile Include="Utilities\HclStringUtilitiesTests.cs" />
-    <Compile Include="Parser\HCL\PosTests.cs" />
+    <Compile Include="Parse\HCL\PosTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

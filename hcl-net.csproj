@@ -40,21 +40,21 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Parser\HCL\AST\Comment.cs" />
-    <Compile Include="Parser\HCL\AST\CommentGroup.cs" />
-    <Compile Include="Parser\HCL\AST\File.cs" />
-    <Compile Include="Parser\HCL\AST\INode.cs" />
-    <Compile Include="Parser\HCL\AST\ListType.cs" />
-    <Compile Include="Parser\HCL\AST\LiteralType.cs" />
-    <Compile Include="Parser\HCL\AST\ObjectItem.cs" />
-    <Compile Include="Parser\HCL\AST\ObjectKey.cs" />
-    <Compile Include="Parser\HCL\AST\ObjectList.cs" />
-    <Compile Include="Parser\HCL\AST\ObjectType.cs" />
-    <Compile Include="Parser\HCL\Parser.cs" />
-    <Compile Include="Parser\HCL\Pos.cs" />
-    <Compile Include="Parser\HCL\Scanner.cs" />
-    <Compile Include="Parser\HCL\Token.cs" />
-    <Compile Include="Parser\HCL\TokenType.cs" />
+    <Compile Include="Parse\HCL\AST\Comment.cs" />
+    <Compile Include="Parse\HCL\AST\CommentGroup.cs" />
+    <Compile Include="Parse\HCL\AST\File.cs" />
+    <Compile Include="Parse\HCL\AST\INode.cs" />
+    <Compile Include="Parse\HCL\AST\ListType.cs" />
+    <Compile Include="Parse\HCL\AST\LiteralType.cs" />
+    <Compile Include="Parse\HCL\AST\ObjectItem.cs" />
+    <Compile Include="Parse\HCL\AST\ObjectKey.cs" />
+    <Compile Include="Parse\HCL\AST\ObjectList.cs" />
+    <Compile Include="Parse\HCL\AST\ObjectType.cs" />
+    <Compile Include="Parse\HCL\Parser.cs" />
+    <Compile Include="Parse\HCL\Pos.cs" />
+    <Compile Include="Parse\HCL\Scanner.cs" />
+    <Compile Include="Parse\HCL\Token.cs" />
+    <Compile Include="Parse\HCL\TokenType.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Utilities\HclStringUtilities.cs" />
   </ItemGroup>

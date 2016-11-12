@@ -1,4 +1,4 @@
-﻿namespace hcl_net.Parser.HCL
+﻿namespace hcl_net.Parse.HCL
 {
     internal struct Pos
     {

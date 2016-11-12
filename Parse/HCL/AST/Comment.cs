@@ -1,4 +1,4 @@
-﻿namespace hcl_net.Parser.HCL.AST
+﻿namespace hcl_net.Parse.HCL.AST
 {
     class Comment : INode
     {

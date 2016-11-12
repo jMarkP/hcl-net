@@ -2,7 +2,7 @@
 using System.Linq;
 using System.Text.RegularExpressions;
 
-namespace hcl_net.Parser.HCL
+namespace hcl_net.Parse.HCL
 {
     class Scanner
     {
@@ -32,7 +32,7 @@ namespace hcl_net.Parser.HCL
         /// Token text end position
         /// </summary>
         private int tokenEnd;
-        
+
         private int errorCount;
 
         public delegate void ErrorDelegate(Pos pos, string message);
@@ -116,7 +116,8 @@ namespace hcl_net.Parser.HCL
                 {
                     case Eof:
                         tokenType = TokenType.EOF;
-                        break;
+                        // Short circuit EOF
+                        return new Token(tokenType, tokenPos, "", false);
                     case '"':
                         tokenType = TokenType.STRING;
                         ScanString(ch);
@@ -177,7 +178,7 @@ namespace hcl_net.Parser.HCL
                         return null;
                 }
             }
-            
+
             tokenEnd = Math.Min(srcPos.Offset, _buffer.Length);
             var len = tokenEnd - tokenStart;
             tokenText = _buffer.Substring(tokenPos.Offset, len);
@@ -323,7 +324,7 @@ namespace hcl_net.Parser.HCL
                 tokenType = TokenType.FLOAT;
                 return;
             }
-            
+
             if (ch != Eof)
             {
                 Unread();
@@ -592,10 +593,8 @@ namespace hcl_net.Parser.HCL
                 ch = Next();
             }
 
-            if (ch != Eof)
-            {
-                Unread();
-            }
+            Unread();
+
             // We need to examine the identifier to see if it's
             //  a reserved word
             var identifier = _buffer.Substring(offs, srcPos.Offset - offs);
@@ -605,7 +604,7 @@ namespace hcl_net.Parser.HCL
                 tokenType = TokenType.BOOL;
             }
         }
-        
+
         private static readonly char[] whitespaceChars =
         {
             ' ', '\t', '\n', '\r'
@@ -626,7 +625,7 @@ namespace hcl_net.Parser.HCL
                    || ('a' <= ch && ch <= 'f')
                    || ('A' <= ch && ch <= 'F');
         }
-        
+
         private void Err(string message)
         {
             errorCount++;

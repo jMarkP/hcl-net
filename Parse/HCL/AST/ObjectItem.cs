@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace hcl_net.Parser.HCL.AST
+namespace hcl_net.Parse.HCL.AST
 {
     /// <summary>
     /// An HCL Object Item. An item is represented with a key (or keys).

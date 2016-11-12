@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace hcl_net.Parser.HCL.AST
+namespace hcl_net.Parse.HCL.AST
 {
     /// <summary>
     /// File is a single HCL file

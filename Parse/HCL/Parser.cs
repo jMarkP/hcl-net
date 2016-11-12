@@ -1,17 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using hcl_net.Parser.HCL.AST;
+using hcl_net.Parse.HCL.AST;
 
-namespace hcl_net.Parser.HCL
+namespace hcl_net.Parse.HCL
 {
     class Parser
     {
         private const string ErrEofToken = "EOF token found";
         private readonly Scanner _scanner;
-        private readonly bool _enableTrace;
 
         /// <summary>
         /// Last read token
@@ -35,15 +31,14 @@ namespace hcl_net.Parser.HCL
         /// </summary>
         private int _n;
 
-        public Parser(string input, bool enableTrace)
-            : this(input, null, enableTrace)
+        public Parser(string input)
+            : this(input, null)
         {
         }
 
-        public Parser(string input, string filename, bool enableTrace)
+        public Parser(string input, string filename)
         {
             _scanner = new Scanner(input, filename);
-            _enableTrace = enableTrace;
         }
 
         public File Parse(out string error)
@@ -121,7 +116,7 @@ namespace hcl_net.Parser.HCL
             return new ObjectList(items);
         }
 
-        private ObjectItem ParseObjectItem(out string parseError)
+        public ObjectItem ParseObjectItem(out string parseError)
         {
             var keys = ParseObjectKey(out parseError);
             if (keys.Length > 0 && parseError == ErrEofToken)
@@ -196,11 +191,6 @@ namespace hcl_net.Parser.HCL
             return new ObjectItem(keys, assign, val, leadComment, lineComment);
         }
 
-        private INode ParseObjectType(out string parseError)
-        {
-            throw new NotImplementedException();
-        }
-
         private ObjectKey[] ParseObjectKey(out string parseError)
         {
             parseError = null;
@@ -252,7 +242,148 @@ namespace hcl_net.Parser.HCL
 
         private INode ParseObject(out string parseError)
         {
-            throw new NotImplementedException();
+            Scan();
+            switch (_token.Type)
+            {
+                case TokenType.NUMBER:
+                case TokenType.FLOAT:
+                case TokenType.BOOL:
+                case TokenType.STRING:
+                case TokenType.HEREDOC:
+                    return ParseLiteralType(out parseError);
+                case TokenType.LBRACE:
+                    return ParseObjectType(out parseError);
+                case TokenType.LBRACK:
+                    return ParseListType(out parseError);
+                case TokenType.COMMENT:
+                    // Implement comment
+                    break;
+                case TokenType.EOF:
+                    parseError = ErrEofToken;
+                    return null;
+            }
+            parseError = string.Format("Unknown token: {0}", _token);
+            return null;
+        }
+
+        private ObjectType ParseObjectType(out string parseError)
+        {
+            // Assume that the current token is an lbrace
+            var lBracePos = _token.Pos;
+
+            var list = ParseObjectList(true, out parseError);
+
+            // if we hit RBRACE, we are good to go (means we parsed all Items), if it's
+            // not a RBRACE, it's an syntax error and we just return it.
+            if (!string.IsNullOrEmpty(parseError)
+                && _token.Type != TokenType.RBRACE)
+            {
+                return null;
+            }
+
+            // No error, scan and expect the ending to be a brace
+            Scan();
+            if (_token.Type != TokenType.RBRACE)
+            {
+                parseError = string.Format("Object expected close RBRACE got: {0}", _token.Type);
+                return null;
+            }
+
+            var rBracePos = _token.Pos;
+
+            parseError = null;
+            return new ObjectType(lBracePos, list, rBracePos);
+        }
+
+        private ListType ParseListType(out string parseError)
+        {
+            // We assume that the current scanned token is a LBRACK
+            var lBrackPos = _token.Pos;
+            var items = new List<INode>();
+
+            var needComma = false;
+            while (true)
+            {
+                Scan();
+                if (needComma)
+                {
+                    if (_token.Type != TokenType.COMMA
+                        && _token.Type != TokenType.RBRACK)
+                    {
+                        parseError = string.Format("Error parsing list. Expected comma or list end, got: {0}",
+                            _token.Type);
+                        return null;
+                    }
+                }
+                switch (_token.Type)
+                {
+                    case TokenType.NUMBER:
+                    case TokenType.FLOAT:
+                    case TokenType.STRING:
+                    case TokenType.HEREDOC:
+                        var literal = ParseLiteralType(out parseError);
+                        if (!string.IsNullOrEmpty(parseError))
+                        {
+                            return null;
+                        }
+
+                        // If there's a lead comment, apply it
+                        if (_leadComment != null)
+                        {
+                            literal.LeadComment = _leadComment;
+                            // And consume it
+                            _leadComment = null;
+                        }
+
+                        items.Add(literal);
+                        needComma = true;
+                        break;
+                    case TokenType.COMMA:
+                        // Get next list item, or we are at the end
+                        // Do a lookahead for possible line comment
+                        Scan();
+                        // Did we just read a comment?
+                        if (_lineComment != null && items.Count > 0)
+                        {
+                            var lastLiteral = items.Last() as LiteralType;
+                            if (lastLiteral != null)
+                            {
+                                lastLiteral.LineComment = _lineComment;
+                                _lineComment = null;
+                            }
+                        }
+                        Unscan();
+                        needComma = false;
+                        break;
+                    case TokenType.LBRACE:
+                        // Looks like a nested object, so parse it out
+                        var objectType = ParseObjectType(out parseError);
+                        if (!string.IsNullOrEmpty(parseError))
+                        {
+                            return null;
+                        }
+                        items.Add(objectType);
+                        needComma = true;
+                        break;
+                    case TokenType.RBRACK:
+                        // Finished;
+                        var rBrackPos = _token.Pos;
+                        parseError = null;
+                        return new ListType(lBrackPos, items, rBrackPos);
+                    case TokenType.BOOL:
+                    case TokenType.LBRACK:
+                    // Not supported by upstream implementation yet
+                    default:
+                        parseError = string.Format("Unexpected token while parsing list: {0}", _token.Type);
+                        return null;
+                }
+            }
+        }
+
+        private LiteralType ParseLiteralType(out string parseError)
+        {
+            parseError = null;
+            return new LiteralType(_token, null, null);
         }
 
         private CommentGroup ConsumeCommentGroup(int n, out int endLine)

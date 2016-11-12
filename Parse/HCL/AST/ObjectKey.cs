@@ -1,4 +1,4 @@
-﻿namespace hcl_net.Parser.HCL.AST
+﻿namespace hcl_net.Parse.HCL.AST
 {
     /// <summary>
     /// Object keys are either an identifier or of type string

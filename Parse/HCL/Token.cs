@@ -2,7 +2,7 @@
 using System.Linq;
 using hcl_net.Utilities;
 
-namespace hcl_net.Parser.HCL
+namespace hcl_net.Parse.HCL
 {
     internal class Token
     {

@@ -1,7 +1,7 @@
-﻿using hcl_net.Parser.HCL;
+﻿using hcl_net.Parse.HCL;
 using NUnit.Framework;
 
-namespace hcl_net.Test.Parser.HCL
+namespace hcl_net.Test.Parse.HCL
 {
     [TestFixture]
     class TokenTests
