@@ -14,7 +14,7 @@ namespace hcl_net.Test.Parse.HCL
         [TestCase(TokenType.STRING, @"""foo""", "foo")]
         [TestCase(TokenType.STRING, @"""foo\nbar""", "foo\nbar")]
         [TestCase(TokenType.STRING, @"""${file(""foo"")}""", "${file(\"foo\")}")]
-        [TestCase(TokenType.STRING, @"""${replace(var.foo, ""."", ""\\."")}""")]
+        [TestCase(TokenType.STRING, @"""${replace(var.foo, ""."", ""\\."")}""", "${replace(var.foo, \".\", \"\\\\.\")}")]
         [TestCase(TokenType.HEREDOC, "<<EOF\nfoo\nbar\nEOF", "foo\nbar")]
         [TestCase(TokenType.HEREDOC, "<<-EOF\n\t\t foo\n\t\t  bar\n\t\t EOF", "foo\n bar\n")]
         [TestCase(TokenType.HEREDOC, "<<-EOF\n\t\t foo\n\tbar\n\t\t EOF", "\t\t foo\n\tbar\n")]
