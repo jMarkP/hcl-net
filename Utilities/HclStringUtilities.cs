@@ -37,7 +37,7 @@ namespace hcl_net.Utilities
             {
                 // If we're starting a '${}' then let it through un-unquoted.
                 // Specifically: we don't unquote any characters within the `${}`
-                // section, except for escaped backslashes, which we handle specifically.
+                // section.
                 if (s[i] == '$'
                     && i < s.Length - 1
                     && s[i + 1] == '{')
@@ -50,14 +50,7 @@ namespace hcl_net.Utilities
                     {
                         var r = s[i];
                         i++;
-
-                        // We special case escaped backslashes in interpolations, converting
-                        // them to their unescaped equivalents.
-                        if (r == '\\')
-                        {
-                            var q = s[i];
-                            if (q == '\\') continue;
-                        }
+                        
                         sb.Append(r);
                         if (r == '{')
                             braces++;

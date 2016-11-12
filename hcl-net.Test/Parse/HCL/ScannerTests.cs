@@ -113,8 +113,8 @@ namespace hcl_net.Test.Parse.HCL
 
     provider ""aws"" {
 	  access_key = ""foo""
-	  secret_key = ""bar""
-	}
+	  secret_key = ""${replace(var.foo, ""."", ""\\."")}""
+    }
 
     resource ""aws_security_group"" ""firewall"" {
 	    count = 5
@@ -163,7 +163,7 @@ EOF
                 Tuple.Create(TokenType.STRING, @"""foo"""),
                 Tuple.Create(TokenType.IDENT, @"secret_key"),
                 Tuple.Create(TokenType.ASSIGN, @"="),
-                Tuple.Create(TokenType.STRING, @"""bar"""),
+                Tuple.Create(TokenType.STRING, @"""${replace(var.foo, ""."", ""\\."")}"""),
                 Tuple.Create(TokenType.RBRACE, @"}"),
                 Tuple.Create(TokenType.IDENT, @"resource"),
                 Tuple.Create(TokenType.STRING, @"""aws_security_group"""),

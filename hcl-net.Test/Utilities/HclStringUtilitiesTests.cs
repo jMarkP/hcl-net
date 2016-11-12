@@ -59,7 +59,7 @@ namespace hcl_net.Test.Utilities
                 {@"""${file(""\""foo\"""")}""", "${file(\"\\\"foo\\\"\")}"},
                 {@"""echo ${var.region}${element(split("","",var.zones),0)}""",
                     "echo ${var.region}${element(split(\",\",var.zones),0)}"},
-                {@"""${HH\\:mm\\:ss}""", "${HH\\:mm\\:ss}"},
+                {@"""${HH\:mm\:ss}""", "${HH\\:mm\\:ss}"},
                 {@"""\a\b\f\r\n\t\v""", "\a\b\f\r\n\t\v" },
                 {@"""\\""", "\\" },
                 {@"""abc\xffdef""", "abc\x00ffdef" },
