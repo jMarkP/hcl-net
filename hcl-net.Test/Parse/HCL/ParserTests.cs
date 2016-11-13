@@ -158,5 +158,28 @@ EOF
                 .ToArray();
             Assert.That(actualTypes, Is.EquivalentTo(expectedTypes));
         }
+
+        [TestCase("foo {}", new[] { TokenType.IDENT })]
+        [TestCase("foo = {}", new[] { TokenType.IDENT })]
+        [TestCase("foo = bar", new[] { TokenType.IDENT })]
+        [TestCase("foo = 123", new[] { TokenType.IDENT })]
+        [TestCase("foo = \"${var.bar}", new[] { TokenType.IDENT })]
+        [TestCase("\"foo\" {}", new[] { TokenType.STRING })]
+        [TestCase("\"foo\" = {}", new[] { TokenType.STRING })]
+        [TestCase("\"foo\" = \"${var.bar}", new[] { TokenType.STRING })]
+        [TestCase("foo bar {}", new[] { TokenType.IDENT, TokenType.IDENT })]
+        [TestCase("foo \"bar\" {}", new[] { TokenType.IDENT, TokenType.STRING })]
+        [TestCase("\"foo\" bar {}", new[] { TokenType.STRING, TokenType.IDENT })]
+        [TestCase("foo bar baz {}", new[] { TokenType.IDENT, TokenType.IDENT, TokenType.IDENT,  })]
+        public void TestObjectKey(string input, TokenType[] expectedTypes)
+        {
+            var sut = new Parser(input);
+            string parserError;
+            var keys = sut.ParseObjectKey(out parserError);
+
+            Assert.That(parserError, Is.Null);
+            var actualTypes = keys.Select(k => k.Token.Type).ToArray();
+            Assert.That(actualTypes, Is.EquivalentTo(expectedTypes));
+        }
     }
 }

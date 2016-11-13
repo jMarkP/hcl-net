@@ -191,7 +191,7 @@ namespace hcl_net.Parse.HCL
             return new ObjectItem(keys, assign, val, leadComment, lineComment);
         }
 
-        private ObjectKey[] ParseObjectKey(out string parseError)
+        internal ObjectKey[] ParseObjectKey(out string parseError)
         {
             parseError = null;
             var keys = new List<ObjectKey>();
