@@ -84,39 +84,40 @@ namespace hcl_net.Parse.HCL
             {
                 if (inObj)
                 {
-                    var tok = Scan();
+                    Scan();
                     Unscan();
-                    if (tok.Type == TokenType.RBRACE)
+                    if (_token.Type == TokenType.RBRACE)
                     {
                         break;
-                    }
-                    var item = ParseObjectItem(out parseErr);
-                    if (!string.IsNullOrEmpty(parseErr))
-                    {
-                        // Not really an error in this case
-                        if (parseErr == ErrEofToken)
-                        {
-                            parseErr = null;
-                        }
-                        break;
-                    }
-
-                    items.Add(item);
-
-                    // Object lists can be optionally comma-delimited, e.g.
-                    // when a list of maps is being expressed, so a comma is
-                    // allowed here
-                    tok = Scan();
-                    if (tok.Type != TokenType.COMMA)
-                    {
-                        Unscan();
                     }
                 }
+                var item = ParseObjectItem(out parseErr);
+                if (!string.IsNullOrEmpty(parseErr))
+                {
+                    // Not really an error in this case
+                    if (parseErr == ErrEofToken)
+                    {
+                        parseErr = null;
+                    }
+                    break;
+                }
+
+                items.Add(item);
+
+                // Object lists can be optionally comma-delimited, e.g.
+                // when a list of maps is being expressed, so a comma is
+                // allowed here
+                Scan();
+                if (_token.Type != TokenType.COMMA)
+                {
+                    Unscan();
+                }
+
             }
             return new ObjectList(items);
         }
 
-        public ObjectItem ParseObjectItem(out string parseError)
+        internal ObjectItem ParseObjectItem(out string parseError)
         {
             var keys = ParseObjectKey(out parseError);
             if (keys.Length > 0 && parseError == ErrEofToken)
