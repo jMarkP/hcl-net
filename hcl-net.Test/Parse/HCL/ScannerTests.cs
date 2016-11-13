@@ -88,7 +88,7 @@ namespace hcl_net.Test.Parse.HCL
                 Tuple.Create(TokenType.LBRACE, "{"),
                 Tuple.Create(TokenType.IDENT, "user_data"),
                 Tuple.Create(TokenType.ASSIGN, "="),
-                Tuple.Create(TokenType.HEREDOC, "<<HEREDOC\r\n    test script\r\nHEREDOC\r"),
+                Tuple.Create(TokenType.HEREDOC, "<<HEREDOC\r\n    test script\r\nHEREDOC\r\n"),
                 Tuple.Create(TokenType.RBRACE, "}")
             };
 
@@ -194,7 +194,7 @@ EOF
                 Tuple.Create(TokenType.NUMBER, @"0"),
                 Tuple.Create(TokenType.IDENT, @"description"),
                 Tuple.Create(TokenType.ASSIGN, @"="),
-                Tuple.Create(TokenType.HEREDOC, "<<EOF\nMain interface\nEOF"),
+                Tuple.Create(TokenType.HEREDOC, "<<EOF\nMain interface\nEOF\n"),
                 Tuple.Create(TokenType.RBRACE, @"}"),
                 Tuple.Create(TokenType.IDENT, @"network_interface"),
                 Tuple.Create(TokenType.LBRACE, @"{"),
@@ -203,7 +203,7 @@ EOF
                 Tuple.Create(TokenType.NUMBER, @"1"),
                 Tuple.Create(TokenType.IDENT, @"description"),
                 Tuple.Create(TokenType.ASSIGN, @"="),
-                Tuple.Create(TokenType.HEREDOC, "<<-EOF\n\t\t\tOuter text\n\t\t\t\tIndented text\n\t\t\tEOF"),
+                Tuple.Create(TokenType.HEREDOC, "<<-EOF\n\t\t\tOuter text\n\t\t\t\tIndented text\n\t\t\tEOF\n"),
                 Tuple.Create(TokenType.RBRACE, @"}"),
                 Tuple.Create(TokenType.RBRACE, @"}"),
                 Tuple.Create(TokenType.EOF, @""),
@@ -284,9 +284,9 @@ EOF
 		Tuple.Create(TokenType.IDENT, "bar９８７６"),
 	}},
     { "heredoc", new []{
-		Tuple.Create(TokenType.HEREDOC, "<<EOF\nhello\nworld\nEOF"),
-		Tuple.Create(TokenType.HEREDOC, "<<EOF123\nhello\nworld\nEOF123"),
-        Tuple.Create(TokenType.HEREDOC, "<<-EOF123\n\thello\n\tworld\n\tEOF123"),
+		Tuple.Create(TokenType.HEREDOC, "<<EOF\nhello\nworld\nEOF\n"),
+		Tuple.Create(TokenType.HEREDOC, "<<EOF123\nhello\nworld\nEOF123\n"),
+        Tuple.Create(TokenType.HEREDOC, "<<-EOF123\n\thello\n\tworld\n\tEOF123\n"),
     }},
     { "string", new []{
 		Tuple.Create(TokenType.STRING, @""" """),

@@ -462,8 +462,6 @@ namespace hcl_net.Parse.HCL
                     return;
                 }
             }
-            // Unread the final \n
-            Unread();
         }
 
         private void ScanString(char ch)

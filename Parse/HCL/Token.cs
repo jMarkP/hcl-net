@@ -106,32 +106,47 @@ namespace hcl_net.Parse.HCL
         /// <returns></returns>
         private string UnindentHeredoc(string text)
         {
-            var idx = text.IndexOf("\n", StringComparison.InvariantCulture);
-            if (idx < 0)
+            var firstNewlineIdx = text.IndexOf("\n", StringComparison.InvariantCulture);
+            if (firstNewlineIdx < 0)
             {
                 throw new ApplicationException("Heredoc must contain a newline");
+            }
+            if (text.Last() != '\n')
+            {
+                throw new ApplicationException("Heredoc must end with a newline");
             }
 
             // Strip the opening line (+\n) and the ending HEREDOC delimiter:
             // "<<BLAH\n
             // Foo\n
             // Bar\n
-            // BLAH"
+            // BLAH\n"
             //   -->
             // "Foo\n
             // Bar\n
             // "
             var unindent = text[2] == '-';
-            var delimeterLength = idx - 2 - (unindent ? 1 : 0);
-            var strippedString = text.Substring(idx + 1, 
-                text.Length - (idx + 1) - delimeterLength);
+            var delimeterLength = firstNewlineIdx 
+                - 2 /*<<*/ 
+                - (unindent ? 1 : 0) /* - if we unindent */;
+            var strippedString = text.Substring(
+                // Start from just after the first \n
+                firstNewlineIdx + 1, 
+                // And take away from the total length...
+                text.Length - 
+                // The first line...
+                (firstNewlineIdx + 1) - 
+                // The final delimeter
+                delimeterLength -
+                // And the final newline
+                1);
 
             if (!unindent)
             {
                 // If we don't need to unindent, just return the stripped string unaltered
                 // Note we can assume that the last line is the same length as
                 //  the first line
-                return strippedString.Substring(0, strippedString.Length - 1);
+                return strippedString;
             }
 
             // Split the remaining string into lines
@@ -153,7 +168,7 @@ namespace hcl_net.Parse.HCL
             // Otherwise, strip the prefix from each line
             // and rejoin them
             return string.Join("\n",
-                lines.Select(l => l.Substring(whitespacePrefix.Length)));
+                lines.Take(lines.Length-1).Select(l => l.Substring(whitespacePrefix.Length))) + "\n";
         }
 
         public override string ToString()
