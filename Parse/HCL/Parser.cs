@@ -13,9 +13,7 @@ namespace hcl_net.Parse.HCL
         /// Last read token
         /// </summary>
         private Token _token;
-        private Token _commaPrev;
-
-        private CommentGroup[] _comments;
+        
         /// <summary>
         /// Last lead comment
         /// </summary>
@@ -24,8 +22,7 @@ namespace hcl_net.Parse.HCL
         /// Last line comment
         /// </summary>
         private CommentGroup _lineComment;
-
-        private int _indent;
+        
         /// <summary>
         /// Buffer size (max = 1)
         /// </summary>
