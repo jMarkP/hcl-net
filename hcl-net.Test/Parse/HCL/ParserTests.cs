@@ -88,5 +88,75 @@ EOF
             Assert.That(result, Is.Null);
             Assert.That(parserError, Is.EqualTo("Error parsing list. Expected comma or list end, got: LBRACE"));
         }
+
+        [Test]
+        public void TestListOfMaps_LeadComment()
+        {
+            var input = @"foo = [
+    1,
+    # bar
+    2,
+    3,
+]".Replace("\r\n", "\n");
+            var expectedComments = new[] {"", "# bar", ""};
+
+            var sut = new Parser(input);
+            string parserError;
+            var item = sut.ParseObjectItem(out parserError);
+            Assert.That(parserError, Is.Null);
+            Assert.That(item.Val, Is.InstanceOf<ListType>());
+            var list = (ListType) item.Val;
+            var actualComments = list.List
+                .Select(i => ((LiteralType) i))
+                .Select(literal => literal.LeadComment != null && literal.LeadComment.List.Any()
+                    ? literal.LeadComment.List[0].Text
+                    : "")
+                .ToArray();
+            Assert.That(actualComments, Is.EquivalentTo(expectedComments));
+        }
+
+        [Test]
+        public void TestListOfMaps_LineComment()
+        {
+            var input = @"foo = [
+    1,
+    2, # bar
+    3,
+]".Replace("\r\n", "\n");
+            var expectedComments = new[] { "", "# bar", "" };
+
+            var sut = new Parser(input);
+            string parserError;
+            var item = sut.ParseObjectItem(out parserError);
+            Assert.That(parserError, Is.Null);
+            Assert.That(item.Val, Is.InstanceOf<ListType>());
+            var list = (ListType)item.Val;
+            var actualComments = list.List
+                .Select(i => ((LiteralType)i))
+                .Select(literal => literal.LineComment != null && literal.LineComment.List.Any()
+                    ? literal.LineComment.List[0].Text
+                    : "")
+                .ToArray();
+            Assert.That(actualComments, Is.EquivalentTo(expectedComments));
+        }
+
+        [TestCase("foo = {}", new Type[0], 0)]
+        [TestCase("foo = {bar = \"fatih\"}", new [] {typeof(LiteralType)})]
+        [TestCase("foo = {bar = \"fatih\" baz = [\"arslan\"]}", new[] { typeof(LiteralType), typeof(ListType) })]
+        [TestCase("foo = {bar {}}", new[] { typeof(ObjectType) })]
+        [TestCase("foo = {bar {} foo = true}", new[] { typeof(ObjectType), typeof(LiteralType) })]
+        public void TestObjectType(string input, Type[] expectedTypes)
+        {
+            var sut = new Parser(input);
+            string parserError;
+            var item = sut.ParseObjectItem(out parserError);
+            Assert.That(parserError, Is.Null);
+            Assert.That(item.Val, Is.InstanceOf<ObjectType>());
+            var obj = (ObjectType) item.Val;
+            var actualTypes = obj.List.Items
+                .Select(x => x.Val.GetType())
+                .ToArray();
+            Assert.That(actualTypes, Is.EquivalentTo(expectedTypes));
+        }
     }
 }

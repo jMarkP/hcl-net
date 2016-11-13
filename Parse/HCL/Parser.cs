@@ -423,13 +423,13 @@ namespace hcl_net.Parse.HCL
         /// and remembers the last lead and line comments
         /// </summary>
         /// <returns></returns>
-        private Token Scan()
+        private void Scan()
         {
             // If we have a token on the buffer, then return it
             if (_n != 0)
             {
                 _n = 0;
-                return _token;
+                return;
             }
 
             // Otherwise consume the next token from the scanner
@@ -475,8 +475,6 @@ namespace hcl_net.Parse.HCL
                     }
                 }
             }
-
-            return _token;
         }
 
         private void Unscan()
