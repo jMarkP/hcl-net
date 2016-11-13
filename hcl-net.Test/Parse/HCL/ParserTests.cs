@@ -140,7 +140,7 @@ EOF
             Assert.That(actualComments, Is.EquivalentTo(expectedComments));
         }
 
-        [TestCase("foo = {}", new Type[0], 0)]
+        [TestCase("foo = {}", new Type[0])]
         [TestCase("foo = {bar = \"fatih\"}", new [] {typeof(LiteralType)})]
         [TestCase("foo = {bar = \"fatih\" baz = [\"arslan\"]}", new[] { typeof(LiteralType), typeof(ListType) })]
         [TestCase("foo = {bar {}}", new[] { typeof(ObjectType) })]
