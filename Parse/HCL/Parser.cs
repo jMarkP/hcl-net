@@ -14,6 +14,7 @@ namespace hcl_net.Parse.HCL
         /// </summary>
         private Token _token;
         
+        private List<CommentGroup> _comments;
         /// <summary>
         /// Last lead comment
         /// </summary>
@@ -36,6 +37,7 @@ namespace hcl_net.Parse.HCL
         public Parser(string input, string filename)
         {
             _scanner = new Scanner(input, filename);
+            _comments = new List<CommentGroup>();
         }
 
         public File Parse(out string error)
@@ -60,7 +62,7 @@ namespace hcl_net.Parse.HCL
                 return null;
             }
             error = null;
-            return new File(objectList, _comments);
+            return new File(objectList, _comments.ToArray());
         }
 
         /// <summary>
@@ -394,7 +396,10 @@ namespace hcl_net.Parse.HCL
             {
                 list.Add(ConsumeComment(out endLine));
             }
-            return new CommentGroup(list);
+            var group = new CommentGroup(list);
+
+            _comments.Add(group);
+            return group;
         }
 
         private Comment ConsumeComment(out int endLine)
