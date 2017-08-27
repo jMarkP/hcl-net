@@ -483,6 +483,18 @@ namespace hcl_net.Parse.HCL
         {
             _n = 1;
         }
+        
+        public void TestCoverage()
+        {
+            var x = 1;
+            if (x < _n){
+                return;    
+            }
+            x += 10;
+            if (x >= _n) {
+                return;
+            }
+        }
     }
 
 }
