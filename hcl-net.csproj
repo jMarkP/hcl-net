@@ -57,8 +57,23 @@
     <Compile Include="Parse\HCL\TokenType.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Utilities\HclStringUtilities.cs" />
+    <Compile Include="v2\hcldec\Spec.cs" />
+    <Compile Include="v2\hclsyntax\parser\AST\Comment.cs" />
+    <Compile Include="v2\hclsyntax\parser\AST\CommentGroup.cs" />
+    <Compile Include="v2\hclsyntax\parser\AST\File.cs" />
+    <Compile Include="v2\hclsyntax\parser\AST\INode.cs" />
+    <Compile Include="v2\hclsyntax\parser\AST\ListType.cs" />
+    <Compile Include="v2\hclsyntax\parser\AST\LiteralType.cs" />
+    <Compile Include="v2\hclsyntax\parser\AST\ObjectItem.cs" />
+    <Compile Include="v2\hclsyntax\parser\AST\ObjectKey.cs" />
+    <Compile Include="v2\hclsyntax\parser\AST\ObjectList.cs" />
+    <Compile Include="v2\hclsyntax\parser\AST\ObjectType.cs" />
+    <Compile Include="v2\hclsyntax\parser\Parser.cs" />
+    <Compile Include="v2\hclsyntax\parser\Pos.cs" />
+    <Compile Include="v2\hclsyntax\parser\Scanner.cs" />
+    <Compile Include="v2\hclsyntax\parser\Token.cs" />
+    <Compile Include="v2\hclsyntax\parser\TokenType.cs" />
   </ItemGroup>
-  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
