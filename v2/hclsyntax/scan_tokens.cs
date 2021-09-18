@@ -1,9 +1,10 @@
 using System;
+using System.Linq;
 using System.Collections.Generic;
 
 namespace hcl_net.v2.hclsyntax
 {
-	public static class Scanner
+	internal static class Scanner
 	{
 		#region State machine data
 		static readonly sbyte  []_hcltok_actions = { 0, 1, 0, 1, 1, 1, 3, 1, 4, 1, 7, 1, 8, 1, 9, 1, 10, 1, 11, 1, 12, 1, 13, 1, 14, 1, 15, 1, 16, 1, 17, 1, 18, 1, 19, 1, 20, 1, 23, 1, 24, 1, 25, 1, 26, 1, 27, 1, 28, 1, 29, 1, 30, 1, 31, 1, 32, 1, 35, 1, 36, 1, 37, 1, 38, 1, 39, 1, 40, 1, 41, 1, 42, 1, 43, 1, 44, 1, 47, 1, 48, 1, 49, 1, 50, 1, 51, 1, 52, 1, 53, 1, 56, 1, 57, 1, 58, 1, 59, 1, 60, 1, 61, 1, 62, 1, 63, 1, 64, 1, 65, 1, 66, 1, 67, 1, 68, 1, 69, 1, 70, 1, 71, 1, 72, 1, 73, 1, 74, 1, 75, 1, 76, 1, 77, 1, 78, 1, 79, 1, 80, 1, 81, 1, 82, 1, 83, 1, 84, 1, 85, 2, 0, 14, 2, 0, 25, 2, 0, 29, 2, 0, 37, 2, 0, 41, 2, 1, 2, 2, 4, 5, 2, 4, 6, 2, 4, 21, 2, 4, 22, 2, 4, 33, 2, 4, 34, 2, 4, 45, 2, 4, 46, 2, 4, 54, 2, 4, 55, 0,  };
@@ -27,7 +28,7 @@ namespace hcl_net.v2.hclsyntax
 		static readonly int  hcltok_en_main  = 1459;
 		#endregion
 		
-		IEnumerable<Token> ScanTokens(byte[] data, string filename, Pos start, ScanMode mode)
+		public static IEnumerable<Token> ScanTokens(byte[] data, string filename, Pos start, ScanMode mode)
 		{
 			var stripData = data.StripUTF8BOM();
 			start = new Pos(
@@ -45,7 +46,7 @@ namespace hcl_net.v2.hclsyntax
 			var te = 0;
 			var act = 0;
 			var eof = pe;
-			int[] stack;
+			var stack = new List<int>();
 			int top;
 			
 			int cs; // current state
@@ -64,8 +65,8 @@ namespace hcl_net.v2.hclsyntax
 			}
 			
 			var braces = 0;
-			int[] retBraces; // stack of brace levels that cause us to use fret
-			HeredocInProgress[] heredocs; // stack of heredocs we're currently processing
+			var retBraces = new List<int>(); // stack of brace levels that cause us to use fret
+			var heredocs = new List<HeredocInProgress>(); // stack of heredocs we're currently processing
 			
 			void token(TokenType ty)
 			{
@@ -227,11 +228,11 @@ namespace hcl_net.v2.hclsyntax
 							{{te = p+1;
 									{token(TokenType.TokenTemplateInterp);
 										braces++;
-										retBraces = append(retBraces, braces);
-										if len(heredocs) > 0 {
-											heredocs[len(heredocs)-1].StartOfLine = false;
+										retBraces.Add(braces);
+										if (heredocs.Count > 0) {
+											heredocs[^1].StartOfLine = false;
 										}
-										{{stack = append(stack, 0);
+										{{stack.Add(0);
 											}
 											stack[top] = cs;
 											top += 1;
@@ -244,11 +245,11 @@ namespace hcl_net.v2.hclsyntax
 							{{te = p+1;
 									{token(TokenType.TokenTemplateControl);
 										braces++;
-										retBraces = append(retBraces, braces);
-										if len(heredocs) > 0 {
-											heredocs[len(heredocs)-1].StartOfLine = false;
+										retBraces.Add(braces);
+										if (heredocs.Count > 0) {
+											heredocs[^1].StartOfLine = false;
 										}
-										{{stack = append(stack, 0);
+										{{stack.Add(0);
 											}
 											stack[top] = cs;
 											top += 1;
@@ -262,7 +263,7 @@ namespace hcl_net.v2.hclsyntax
 									{token(TokenType.TokenCQuote);
 										{top -= 1;
 											cs = stack[top];
-											{stack = stack[:len(stack)-1];
+											{stack.RemoveAt(stack.Count -1);
 											}
 											goto _again;}
 									}
@@ -286,11 +287,11 @@ namespace hcl_net.v2.hclsyntax
 									p = p - 1;
 									{token(TokenType.TokenTemplateInterp);
 										braces++;
-										retBraces = append(retBraces, braces);
-										if len(heredocs) > 0 {
-											heredocs[len(heredocs)-1].StartOfLine = false;
+										retBraces.Add(braces);
+										if (heredocs.Count > 0) {
+											heredocs[^1].StartOfLine = false;
 										}
-										{{stack = append(stack, 0);
+										{{stack.Add(0);
 											}
 											stack[top] = cs;
 											top += 1;
@@ -304,11 +305,11 @@ namespace hcl_net.v2.hclsyntax
 									p = p - 1;
 									{token(TokenType.TokenTemplateControl);
 										braces++;
-										retBraces = append(retBraces, braces);
-										if len(heredocs) > 0 {
-											heredocs[len(heredocs)-1].StartOfLine = false;
+										retBraces.Add(braces);
+										if (heredocs.Count > 0) {
+											heredocs[^1].StartOfLine = false;
 										}
-										{{stack = append(stack, 0);
+										{{stack.Add(0);
 											}
 											stack[top] = cs;
 											top += 1;
@@ -389,11 +390,11 @@ namespace hcl_net.v2.hclsyntax
 							{{te = p+1;
 									{token(TokenType.TokenTemplateInterp);
 										braces++;
-										retBraces = append(retBraces, braces);
-										if len(heredocs) > 0 {
-											heredocs[len(heredocs)-1].StartOfLine = false;
+										retBraces.Add(braces);
+										if (heredocs.Count > 0) {
+											heredocs[^1].StartOfLine = false;
 										}
-										{{stack = append(stack, 0);
+										{{stack.Add(0);
 											}
 											stack[top] = cs;
 											top += 1;
@@ -406,11 +407,11 @@ namespace hcl_net.v2.hclsyntax
 							{{te = p+1;
 									{token(TokenType.TokenTemplateControl);
 										braces++;
-										retBraces = append(retBraces, braces);
-										if len(heredocs) > 0 {
-											heredocs[len(heredocs)-1].StartOfLine = false;
+										retBraces.Add(braces);
+										if (heredocs.Count > 0) {
+											heredocs[^1].StartOfLine = false;
 										}
-										{{stack = append(stack, 0);
+										{{stack.Add(0);
 											}
 											stack[top] = cs;
 											top += 1;
@@ -421,10 +422,10 @@ namespace hcl_net.v2.hclsyntax
 							break;
 							case 25:
 							{{te = p+1;
-									{topdoc := &heredocs[len(heredocs)-1]
-										if topdoc.StartOfLine {
-											maybeMarker := bytes.TrimSpace(data[ts:te])
-											if bytes.Equal(maybeMarker, topdoc.Marker) {
+									{var topdoc = heredocs[^1];
+										if (topdoc.StartOfLine) {
+											var maybeMarker = data[ts..te].TrimSpace();
+											if (Enumerable.SequenceEqual(maybeMarker, topdoc.Marker)) {
 												// We actually emit two tokens here: the end-of-heredoc
 												// marker first, and then separately the newline that
 												// follows it. This then avoids issues with the closing
@@ -432,22 +433,22 @@ namespace hcl_net.v2.hclsyntax
 												// to mark the end of an attribute definition.
 												// We might have either a \n sequence or an \r\n sequence
 												// here, so we must handle both.
-												nls := te-1
-												nle := te
-												te--
-												if data[te-1] == '\r' {
+												var nls = te-1;
+												var nle = te;
+												te--;
+												if (data[te-1] == '\r') {
 													// back up one more byte
-													nls--
-													te--
+													nls--;
+													te--;
 												}
 												token(TokenType.TokenCHeredoc);
-												ts = nls
-												te = nle
+												ts = nls;
+												te = nle;
 												token(TokenType.TokenNewline);
-												heredocs = heredocs[:len(heredocs)-1]
+												heredocs.RemoveAt(heredocs.Count - 1);
 												{top -= 1;
 													cs = stack[top];
-													{stack = stack[:len(stack)-1];
+													{stack.RemoveAt(stack.Count -1);
 													}
 													goto _again;}
 											}
@@ -470,11 +471,11 @@ namespace hcl_net.v2.hclsyntax
 									p = p - 1;
 									{token(TokenType.TokenTemplateInterp);
 										braces++;
-										retBraces = append(retBraces, braces);
-										if len(heredocs) > 0 {
-											heredocs[len(heredocs)-1].StartOfLine = false;
+										retBraces.Add(braces);
+										if (heredocs.Count > 0) {
+											heredocs[^1].StartOfLine = false;
 										}
-										{{stack = append(stack, 0);
+										{{stack.Add(0);
 											}
 											stack[top] = cs;
 											top += 1;
@@ -488,11 +489,11 @@ namespace hcl_net.v2.hclsyntax
 									p = p - 1;
 									{token(TokenType.TokenTemplateControl);
 										braces++;
-										retBraces = append(retBraces, braces);
-										if len(heredocs) > 0 {
-											heredocs[len(heredocs)-1].StartOfLine = false;
+										retBraces.Add(braces);
+										if (heredocs.Count > 0) {
+											heredocs[^1].StartOfLine = false;
 										}
-										{{stack = append(stack, 0);
+										{{stack.Add(0);
 											}
 											stack[top] = cs;
 											top += 1;
@@ -504,7 +505,7 @@ namespace hcl_net.v2.hclsyntax
 							case 29:
 							{{te = p;
 									p = p - 1;
-									{heredocs[len(heredocs)-1].StartOfLine = false;
+									{heredocs[^1].StartOfLine = false;
 										token(TokenType.TokenStringLit);
 									}
 								}}
@@ -519,7 +520,7 @@ namespace hcl_net.v2.hclsyntax
 							break;
 							case 31:
 							{{p = ((te))-1;
-									{heredocs[len(heredocs)-1].StartOfLine = false;
+									{heredocs[^1].StartOfLine = false;
 										token(TokenType.TokenStringLit);
 									}
 								}}
@@ -534,7 +535,7 @@ namespace hcl_net.v2.hclsyntax
 										break;
 										case 11:
 										p = ((te))-1;
-										{heredocs[len(heredocs)-1].StartOfLine = false;
+										{heredocs[^1].StartOfLine = false;
 											token(TokenType.TokenStringLit);
 										}
 										
@@ -564,11 +565,11 @@ namespace hcl_net.v2.hclsyntax
 							{{te = p+1;
 									{token(TokenType.TokenTemplateInterp);
 										braces++;
-										retBraces = append(retBraces, braces);
-										if len(heredocs) > 0 {
-											heredocs[len(heredocs)-1].StartOfLine = false;
+										retBraces.Add(braces);
+										if (heredocs.Count > 0) {
+											heredocs[^1].StartOfLine = false;
 										}
-										{{stack = append(stack, 0);
+										{{stack.Add(0);
 											}
 											stack[top] = cs;
 											top += 1;
@@ -581,11 +582,11 @@ namespace hcl_net.v2.hclsyntax
 							{{te = p+1;
 									{token(TokenType.TokenTemplateControl);
 										braces++;
-										retBraces = append(retBraces, braces);
-										if len(heredocs) > 0 {
-											heredocs[len(heredocs)-1].StartOfLine = false;
+										retBraces.Add(braces);
+										if (heredocs.Count > 0) {
+											heredocs[^1].StartOfLine = false;
 										}
-										{{stack = append(stack, 0);
+										{{stack.Add(0);
 											}
 											stack[top] = cs;
 											top += 1;
@@ -612,11 +613,11 @@ namespace hcl_net.v2.hclsyntax
 									p = p - 1;
 									{token(TokenType.TokenTemplateInterp);
 										braces++;
-										retBraces = append(retBraces, braces);
-										if len(heredocs) > 0 {
-											heredocs[len(heredocs)-1].StartOfLine = false;
+										retBraces.Add(braces);
+										if (heredocs.Count > 0) {
+											heredocs[^1].StartOfLine = false;
 										}
-										{{stack = append(stack, 0);
+										{{stack.Add(0);
 											}
 											stack[top] = cs;
 											top += 1;
@@ -630,11 +631,11 @@ namespace hcl_net.v2.hclsyntax
 									p = p - 1;
 									{token(TokenType.TokenTemplateControl);
 										braces++;
-										retBraces = append(retBraces, braces);
-										if len(heredocs) > 0 {
-											heredocs[len(heredocs)-1].StartOfLine = false;
+										retBraces.Add(braces);
+										if (heredocs.Count > 0) {
+											heredocs[^1].StartOfLine = false;
 										}
-										{{stack = append(stack, 0);
+										{{stack.Add(0);
 											}
 											stack[top] = cs;
 											top += 1;
@@ -701,39 +702,39 @@ namespace hcl_net.v2.hclsyntax
 							break;
 							case 47:
 							{{te = p+1;
-									{token(TokenType.TokenBadUTF8) }
+									{token(TokenType.TokenBadUTF8); }
 								}}
 							
 							break;
 							case 48:
 							{{te = p+1;
-									{token(TokenType.TokenInvalid) }
+									{token(TokenType.TokenInvalid); }
 								}}
 							
 							break;
 							case 49:
 							{{te = p;
 									p = p - 1;
-									{token(TokenType.TokenIdent) }
+									{token(TokenType.TokenIdent); }
 								}}
 							
 							break;
 							case 50:
 							{{te = p;
 									p = p - 1;
-									{token(TokenType.TokenBadUTF8) }
+									{token(TokenType.TokenBadUTF8); }
 								}}
 							
 							break;
 							case 51:
 							{{p = ((te))-1;
-									{token(TokenType.TokenIdent) }
+									{token(TokenType.TokenIdent); }
 								}}
 							
 							break;
 							case 52:
 							{{p = ((te))-1;
-									{token(TokenType.TokenBadUTF8) }
+									{token(TokenType.TokenBadUTF8); }
 								}}
 							
 							break;
@@ -741,12 +742,12 @@ namespace hcl_net.v2.hclsyntax
 							{{switch ( act  ) {
 										case 17:
 										p = ((te))-1;
-										{token(TokenType.TokenIdent) }
+										{token(TokenType.TokenIdent); }
 										
 										break;
 										case 18:
 										p = ((te))-1;
-										{token(TokenType.TokenBadUTF8) }
+										{token(TokenType.TokenBadUTF8); }
 										
 										break;
 										
@@ -767,13 +768,13 @@ namespace hcl_net.v2.hclsyntax
 							break;
 							case 56:
 							{{te = p+1;
-									{token(TokenType.TokenComment) }
+									{token(TokenType.TokenComment); }
 								}}
 							
 							break;
 							case 57:
 							{{te = p+1;
-									{token(TokenType.TokenNewline) }
+									{token(TokenType.TokenNewline); }
 								}}
 							
 							break;
@@ -827,7 +828,7 @@ namespace hcl_net.v2.hclsyntax
 							break;
 							case 66:
 							{{te = p+1;
-									{selfToken() }
+									{selfToken(); }
 								}}
 							
 							break;
@@ -841,13 +842,13 @@ namespace hcl_net.v2.hclsyntax
 							break;
 							case 68:
 							{{te = p+1;
-									{if len(retBraces) > 0 && retBraces[len(retBraces)-1] == braces {
+									{if (retBraces.Count > 0 && retBraces[^1] == braces) {
 											token(TokenType.TokenTemplateSeqEnd);
 											braces--;
-											retBraces = retBraces[0:len(retBraces)-1]
+											retBraces.RemoveAt(retBraces.Count - 1);
 											{top -= 1;
 												cs = stack[top];
-												{stack = stack[:len(stack)-1];
+												{stack.RemoveAt(stack.Count -1);
 												}
 												goto _again;}
 										} else {
@@ -860,13 +861,13 @@ namespace hcl_net.v2.hclsyntax
 							break;
 							case 69:
 							{{te = p+1;
-									{if len(retBraces) > 0 && retBraces[len(retBraces)-1] == braces {
+									{if (retBraces.Count > 0 && retBraces[^1] == braces) {
 											token(TokenType.TokenTemplateSeqEnd);
 											braces--;
-											retBraces = retBraces[0:len(retBraces)-1]
+											retBraces.RemoveAt(retBraces.Count - 1);
 											{top -= 1;
 												cs = stack[top];
-												{stack = stack[:len(stack)-1];
+												{stack.RemoveAt(stack.Count -1);
 												}
 												goto _again;}
 										} else {
@@ -885,7 +886,7 @@ namespace hcl_net.v2.hclsyntax
 							case 70:
 							{{te = p+1;
 									{token(TokenType.TokenOQuote);
-										{{stack = append(stack, 0);
+										{{stack.Add(0);
 											}
 											stack[top] = cs;
 											top += 1;
@@ -901,20 +902,20 @@ namespace hcl_net.v2.hclsyntax
 										// <<EOT or <<-EOT, followed by a newline. We want to extract
 										// just the "EOT" portion that we'll use as the closing marker.
 										
-										marker := data[ts+2:te-1]
-										if marker[0] == '-' {
-											marker = marker[1:]
+										var marker = data[(ts+2)..(te-1)];
+										if (marker[0] == '-') {
+											marker = marker[1..];
 										}
-										if marker[len(marker)-1] == '\r' {
-											marker = marker[:len(marker)-1]
+										if (marker[^1] == '\r') {
+											marker = marker[..^1];
 										}
 										
-										heredocs = append(heredocs, heredocInProgress{
-											Marker:      marker,
-											StartOfLine: true,
-										})
+										heredocs.Add(new HeredocInProgress(
+										marker:      marker,
+										startOfLine: true
+										));
 										
-										{{stack = append(stack, 0);
+										{{stack.Add(0);
 											}
 											stack[top] = cs;
 											top += 1;
@@ -925,13 +926,13 @@ namespace hcl_net.v2.hclsyntax
 							break;
 							case 72:
 							{{te = p+1;
-									{token(TokenType.TokenBadUTF8) }
+									{token(TokenType.TokenBadUTF8); }
 								}}
 							
 							break;
 							case 73:
 							{{te = p+1;
-									{token(TokenType.TokenInvalid) }
+									{token(TokenType.TokenInvalid); }
 								}}
 							
 							break;
@@ -944,66 +945,66 @@ namespace hcl_net.v2.hclsyntax
 							case 75:
 							{{te = p;
 									p = p - 1;
-									{token(TokenType.TokenNumberLit) }
+									{token(TokenType.TokenNumberLit); }
 								}}
 							
 							break;
 							case 76:
 							{{te = p;
 									p = p - 1;
-									{token(TokenType.TokenIdent) }
+									{token(TokenType.TokenIdent); }
 								}}
 							
 							break;
 							case 77:
 							{{te = p;
 									p = p - 1;
-									{token(TokenType.TokenComment) }
+									{token(TokenType.TokenComment); }
 								}}
 							
 							break;
 							case 78:
 							{{te = p;
 									p = p - 1;
-									{selfToken() }
+									{selfToken(); }
 								}}
 							
 							break;
 							case 79:
 							{{te = p;
 									p = p - 1;
-									{token(TokenType.TokenBadUTF8) }
+									{token(TokenType.TokenBadUTF8); }
 								}}
 							
 							break;
 							case 80:
 							{{te = p;
 									p = p - 1;
-									{token(TokenType.TokenInvalid) }
+									{token(TokenType.TokenInvalid); }
 								}}
 							
 							break;
 							case 81:
 							{{p = ((te))-1;
-									{token(TokenType.TokenNumberLit) }
+									{token(TokenType.TokenNumberLit); }
 								}}
 							
 							break;
 							case 82:
 							{{p = ((te))-1;
-									{token(TokenType.TokenIdent) }
+									{token(TokenType.TokenIdent); }
 								}}
 							
 							break;
 							case 83:
 							{{p = ((te))-1;
-									{selfToken() }
+									{selfToken(); }
 								}}
 							
 							break;
 							case 84:
 							{{p = ((te))-1;
-									{token(TokenType.TokenBadUTF8) }
+									{token(TokenType.TokenBadUTF8); }
 								}}
 							
 							break;
@@ -1011,12 +1012,12 @@ namespace hcl_net.v2.hclsyntax
 							{{switch ( act  ) {
 										case 22:
 										p = ((te))-1;
-										{token(TokenType.TokenIdent) }
+										{token(TokenType.TokenIdent); }
 										
 										break;
 										case 39:
 										p = ((te))-1;
-										{token(TokenType.TokenBadUTF8) }
+										{token(TokenType.TokenBadUTF8); }
 										
 										break;
 										
@@ -1078,25 +1079,25 @@ namespace hcl_net.v2.hclsyntax
 				
 				_out: {}
 			}
-			if cs < hcltok_first_final {
-				if mode == scanTemplate && len(stack) == 0 {
+			if (cs < hcltok_first_final) {
+				if (mode == ScanMode.Template && stack.Count == 0) {
 					// If we're scanning a bare template then any straggling
 					// top-level stuff is actually literal string, rather than
 					// invalid. This handles the case where the template ends
 					// with a single "$" or "%", which trips us up because we
 					// want to see another character to decide if it's a sequence
 					// or an escape.
-					f.emitToken(TokenStringLit, ts, len(data))
+					f.EmitToken(TokenType.TokenStringLit, ts, data.Length);
 				} else {
-					f.emitToken(TokenInvalid, ts, len(data))
+					f.EmitToken(TokenType.TokenInvalid, ts, data.Length);
 				}
 			}
 			
 			// We always emit a synthetic EOF token at the end, since it gives the
 			// parser position information for an "unexpected EOF" diagnostic.
-			f.emitToken(TokenEOF, len(data), len(data))
+			f.EmitToken(TokenType.TokenEOF, data.Length, data.Length);
 			
-			return f.Tokens
+			return f.Tokens;
 		}
 	}
 }

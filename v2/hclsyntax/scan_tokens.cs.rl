@@ -1,10 +1,11 @@
 // This file is generated from scan_tokens.cs.rl. DO NOT EDIT.
 using System;
+using System.Linq;
 using System.Collections.Generic;
 
 namespace hcl_net.v2.hclsyntax
 {
-    public static class Scanner
+    internal static class Scanner
     {
         #region State machine data
 %%{
@@ -15,7 +16,7 @@ namespace hcl_net.v2.hclsyntax
 }%%
         #endregion
 
-        IEnumerable<Token> ScanTokens(byte[] data, string filename, Pos start, ScanMode mode)
+        public static IEnumerable<Token> ScanTokens(byte[] data, string filename, Pos start, ScanMode mode)
         {
             var stripData = data.StripUTF8BOM();
             start = new Pos(
@@ -100,18 +101,18 @@ namespace hcl_net.v2.hclsyntax
             // <<EOT or <<-EOT, followed by a newline. We want to extract
             // just the "EOT" portion that we'll use as the closing marker.
 
-            marker := data[ts+2:te-1]
-            if marker[0] == '-' {
-                marker = marker[1:]
+            var marker = data[(ts+2)..(te-1)];
+            if (marker[0] == '-') {
+                marker = marker[1..];
             }
-            if marker[len(marker)-1] == '\r' {
-                marker = marker[:len(marker)-1]
+            if (marker[^1] == '\r') {
+                marker = marker[..^1];
             }
 
-            heredocs = append(heredocs, heredocInProgress{
-                Marker:      marker,
-                StartOfLine: true,
-            })
+            heredocs.Add(new HeredocInProgress(
+                marker:      marker,
+                startOfLine: true
+            ));
 
             fcall heredocTemplate;
         }
@@ -121,10 +122,10 @@ namespace hcl_net.v2.hclsyntax
             // ends with a newline character.
 
             // This might actually be our end marker.
-            topdoc := &heredocs[len(heredocs)-1]
-            if topdoc.StartOfLine {
-                maybeMarker := bytes.TrimSpace(data[ts:te])
-                if bytes.Equal(maybeMarker, topdoc.Marker) {
+            var topdoc = heredocs[^1];
+            if (topdoc.StartOfLine) {
+                var maybeMarker = data[ts..te].TrimSpace();
+                if (Enumerable.SequenceEqual(maybeMarker, topdoc.Marker)) {
                     // We actually emit two tokens here: the end-of-heredoc
                     // marker first, and then separately the newline that
                     // follows it. This then avoids issues with the closing
@@ -132,19 +133,19 @@ namespace hcl_net.v2.hclsyntax
                     // to mark the end of an attribute definition.
                     // We might have either a \n sequence or an \r\n sequence
                     // here, so we must handle both.
-                    nls := te-1
-                    nle := te
-                    te--
-                    if data[te-1] == '\r' {
+                    var nls = te-1;
+                    var nle = te;
+                    te--;
+                    if (data[te-1] == '\r') {
                         // back up one more byte
-                        nls--
-                        te--
+                        nls--;
+                        te--;
                     }
                     token(TokenType.TokenCHeredoc);
-                    ts = nls
-                    te = nle
+                    ts = nls;
+                    te = nle;
                     token(TokenType.TokenNewline);
-                    heredocs = heredocs[:len(heredocs)-1]
+                    heredocs.RemoveAt(heredocs.Count - 1);
                     fret;
                 }
             }
@@ -157,7 +158,7 @@ namespace hcl_net.v2.hclsyntax
             // This action is called when a heredoc literal _doesn't_ end
             // with a newline character, e.g. because we're about to enter
             // an interpolation sequence.
-            heredocs[len(heredocs)-1].StartOfLine = false;
+            heredocs[^1].StartOfLine = false;
             token(TokenType.TokenStringLit);
         }
 
@@ -168,9 +169,9 @@ namespace hcl_net.v2.hclsyntax
         action beginTemplateInterp {
             token(TokenType.TokenTemplateInterp);
             braces++;
-            retBraces = append(retBraces, braces);
-            if len(heredocs) > 0 {
-                heredocs[len(heredocs)-1].StartOfLine = false;
+            retBraces.Add(braces);
+            if (heredocs.Count > 0) {
+                heredocs[^1].StartOfLine = false;
             }
             fcall main;
         }
@@ -178,9 +179,9 @@ namespace hcl_net.v2.hclsyntax
         action beginTemplateControl {
             token(TokenType.TokenTemplateControl);
             braces++;
-            retBraces = append(retBraces, braces);
-            if len(heredocs) > 0 {
-                heredocs[len(heredocs)-1].StartOfLine = false;
+            retBraces.Add(braces);
+            if (heredocs.Count > 0) {
+                heredocs[^1].StartOfLine = false;
             }
             fcall main;
         }
@@ -191,10 +192,10 @@ namespace hcl_net.v2.hclsyntax
         }
 
         action closeBrace {
-            if len(retBraces) > 0 && retBraces[len(retBraces)-1] == braces {
+            if (retBraces.Count > 0 && retBraces[^1] == braces) {
                 token(TokenType.TokenTemplateSeqEnd);
                 braces--;
-                retBraces = retBraces[0:len(retBraces)-1]
+                retBraces.RemoveAt(retBraces.Count - 1);
                 fret;
             } else {
                 token(TokenType.TokenCBrace);
@@ -207,10 +208,10 @@ namespace hcl_net.v2.hclsyntax
             // a suitable brace nesting level, otherwise things will get
             // confused. (Not entering this branch indicates a syntax error,
             // which we will catch in the parser.)
-            if len(retBraces) > 0 && retBraces[len(retBraces)-1] == braces {
+            if (retBraces.Count > 0 && retBraces[^1] == braces) {
                 token(TokenType.TokenTemplateSeqEnd);
                 braces--;
-                retBraces = retBraces[0:len(retBraces)-1]
+                retBraces.RemoveAt(retBraces.Count - 1);
                 fret;
             } else {
                 // We intentionally generate a TokenTemplateSeqEnd here,
@@ -275,18 +276,18 @@ namespace hcl_net.v2.hclsyntax
         *|;
 
         identOnly := |*
-            Ident            => { token(TokenType.TokenIdent) };
-            BrokenUTF8       => { token(TokenType.TokenBadUTF8) };
-            AnyUTF8          => { token(TokenType.TokenInvalid) };
+            Ident            => { token(TokenType.TokenIdent); };
+            BrokenUTF8       => { token(TokenType.TokenBadUTF8); };
+            AnyUTF8          => { token(TokenType.TokenInvalid); };
         *|;
 
         main := |*
             Spaces           => {};
-            NumberLit        => { token(TokenType.TokenNumberLit) };
-            Ident            => { token(TokenType.TokenIdent) };
+            NumberLit        => { token(TokenType.TokenNumberLit); };
+            Ident            => { token(TokenType.TokenIdent); };
 
-            Comment          => { token(TokenType.TokenComment) };
-            Newline          => { token(TokenType.TokenNewline) };
+            Comment          => { token(TokenType.TokenComment); };
+            Newline          => { token(TokenType.TokenNewline); };
 
             EqualOp          => { token(TokenType.TokenEqualOp); };
             NotEqual         => { token(TokenType.TokenNotEqual); };
@@ -296,7 +297,7 @@ namespace hcl_net.v2.hclsyntax
             LogicalOr        => { token(TokenType.TokenOr); };
             Ellipsis         => { token(TokenType.TokenEllipsis); };
             FatArrow         => { token(TokenType.TokenFatArrow); };
-            SelfToken        => { selfToken() };
+            SelfToken        => { selfToken(); };
 
             "{"              => openBrace;
             "}"              => closeBrace;
@@ -306,8 +307,8 @@ namespace hcl_net.v2.hclsyntax
             BeginStringTmpl  => beginStringTemplate;
             BeginHeredocTmpl => beginHeredocTemplate;
 
-            BrokenUTF8       => { token(TokenType.TokenBadUTF8) };
-            AnyUTF8          => { token(TokenType.TokenInvalid) };
+            BrokenUTF8       => { token(TokenType.TokenBadUTF8); };
+            AnyUTF8          => { token(TokenType.TokenInvalid); };
         *|;
 
     }%%
@@ -319,7 +320,7 @@ namespace hcl_net.v2.hclsyntax
     var te = 0;
     var act = 0;
     var eof = pe;
-    int[] stack;
+    var stack = new List<int>();
     int top;
 
     int cs; // current state
@@ -338,15 +339,15 @@ namespace hcl_net.v2.hclsyntax
     }
 
     var braces = 0;
-    int[] retBraces; // stack of brace levels that cause us to use fret
-    HeredocInProgress[] heredocs; // stack of heredocs we're currently processing
+    var retBraces = new List<int>(); // stack of brace levels that cause us to use fret
+    var heredocs = new List<HeredocInProgress>(); // stack of heredocs we're currently processing
 
     %%{
         prepush {
-            stack = append(stack, 0);
+            stack.Add(0);
         }
         postpop {
-            stack = stack[:len(stack)-1];
+            stack.RemoveAt(stack.Count -1);
         }
     }%%
 
@@ -373,25 +374,25 @@ namespace hcl_net.v2.hclsyntax
     // If we fall out here without being in a final state then we've
     // encountered something that the scanner can't match, which we'll
     // deal with as an invalid.
-    if cs < hcltok_first_final {
-        if mode == scanTemplate && len(stack) == 0 {
+    if (cs < hcltok_first_final) {
+        if (mode == ScanMode.Template && stack.Count == 0) {
             // If we're scanning a bare template then any straggling
             // top-level stuff is actually literal string, rather than
             // invalid. This handles the case where the template ends
             // with a single "$" or "%", which trips us up because we
             // want to see another character to decide if it's a sequence
             // or an escape.
-            f.emitToken(TokenStringLit, ts, len(data))
+            f.EmitToken(TokenType.TokenStringLit, ts, data.Length);
         } else {
-            f.emitToken(TokenInvalid, ts, len(data))
+            f.EmitToken(TokenType.TokenInvalid, ts, data.Length);
         }
     }
 
     // We always emit a synthetic EOF token at the end, since it gives the
     // parser position information for an "unexpected EOF" diagnostic.
-    f.emitToken(TokenEOF, len(data), len(data))
+    f.EmitToken(TokenType.TokenEOF, data.Length, data.Length);
 
-    return f.Tokens
+    return f.Tokens;
 }
     }
 }

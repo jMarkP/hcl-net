@@ -1,6 +1,6 @@
 namespace hcl_net.v2.hclsyntax
 {
-    internal readonly struct HeredocInProgress
+    internal class HeredocInProgress
     {
         public HeredocInProgress(byte[] marker, bool startOfLine)
         {
@@ -9,6 +9,6 @@ namespace hcl_net.v2.hclsyntax
         }
 
         public byte[] Marker { get; }
-        public bool StartOfLine { get; }
+        public bool StartOfLine { get; set; }
     }
 }
