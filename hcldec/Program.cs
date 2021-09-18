@@ -1,9 +1,12 @@
 ﻿using System;
 using System.CommandLine;
 using System.CommandLine.Invocation;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
+using System.Text;
 using System.Threading.Tasks;
+using hcl_net.v2.hclsyntax;
 
 namespace hcldec
 {
@@ -61,8 +64,10 @@ namespace hcldec
         }
     }";
 
-            var f = new hcl_net.v2.hclsyntax.parser.Parser(contents).Parse(out var err);
-
+            //var f = new hcl_net.v2.hclsyntax.parser.Parser(contents).Parse(out var err);
+            var tokens = Scanner
+                .ScanTokens(Encoding.UTF8.GetBytes(contents), "test", Pos.CreateForFile("test"), ScanMode.Normal)
+                .ToArray(); 
             return 0;
         }
     }

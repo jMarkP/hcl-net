@@ -24,7 +24,8 @@ namespace hcl_net.v2.hclsyntax
             var start = Pos.AdvancedToOffsetIn(Bytes, startOffset);
             var end = start.AdvancedToOffsetIn(Bytes, endOffset);
             Pos = end;
-            Tokens.Add(new Token(tokenType, new TokenRange(Filename, Bytes, start, end)));
+            var token = new Token(tokenType, new TokenRange(Filename, Bytes, start, end));
+            Tokens.Add(token);
         }
     }
 }

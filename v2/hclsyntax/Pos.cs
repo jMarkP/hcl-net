@@ -28,11 +28,11 @@ namespace hcl_net.v2.hclsyntax
 
         public Pos AdvancedToOffsetIn(Span<byte> bytes, int offset)
         {
-            Debug.Assert(offset < bytes.Length);
+            Debug.Assert(offset <= bytes.Length);
             int col = Column;
             int line = Line;
-            int o = Byte + 1;
-            while (o != offset)
+            int o = Byte;
+            while (o < offset)
             {
                 if (bytes[o] == '\n' || (bytes[o] == '\r' && o < bytes.Length - 1 && bytes[o + 1] == '\n'))
                 {
