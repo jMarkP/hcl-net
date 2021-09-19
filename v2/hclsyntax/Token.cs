@@ -19,7 +19,7 @@ namespace hcl_net.v2.hclsyntax
 
         public byte this[int index] => Range[index];
 
-        public string String => Encoding.UTF8.GetString(GetBytes());
+        public string String => GetBytes().Length > 0 ? Encoding.UTF8.GetString(GetBytes()) : "";
 
         public override string ToString()
         {

@@ -1,6 +1,6 @@
 ﻿namespace hcl_net.v2.hclsyntax
 {
-    internal enum TokenType
+	public enum TokenType
 	{
 		// Single-character tokens are represented by their own character, for
 		// convenience in producing these within the scanner. However, the values

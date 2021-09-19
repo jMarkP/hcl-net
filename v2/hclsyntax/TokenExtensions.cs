@@ -194,7 +194,7 @@ namespace hcl_net.v2.hclsyntax
             }
         }
 
-        private static byte[] Utf8BOM = {0xef, 0xbb, 0xbf};
+        public static byte[] Utf8BOM = {0xef, 0xbb, 0xbf};
 
         // stripUTF8BOM checks whether the given buffer begins with a UTF-8 byte order
         // mark (0xEF 0xBB 0xBF) and, if so, returns a truncated slice with the same

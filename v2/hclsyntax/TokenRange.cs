@@ -20,7 +20,9 @@ namespace hcl_net.v2.hclsyntax
         public Pos End { get; }
         public int Length { get; }
 
-        public Span<byte> GetBytes() => ((Span<byte>) _fileContents).Slice(Start.Byte, Length);
+        public Span<byte> GetBytes() => Length > 0 
+            ? ((Span<byte>) _fileContents).Slice(Start.Byte, Length)
+            : Span<byte>.Empty;
 
         public byte this[int index] => _fileContents[Start.Byte + index];
     }
