@@ -129,7 +129,7 @@ namespace hcl_net.Test.Parse.HCL.AST
                 var objectKey = n as ObjectKey;
                 if (objectKey != null)
                 {
-                    Assert.That(objectKey.Token.Text, Is.StringEnding(suffix));
+                    Assert.That(objectKey.Token.Text, Does.EndWith(suffix));
                 }
                 return true;
             });

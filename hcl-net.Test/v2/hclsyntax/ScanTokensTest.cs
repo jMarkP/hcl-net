@@ -20,6 +20,19 @@ namespace hcl_net.Test.v2.hclsyntax
 	        
 	        CompareTokens(actual, testCase.ExpectedTokens);
         }
+        
+        
+        [TestCaseSource(nameof(TemplateTestCases))]
+        public void TestScanTokens_Template(TestCase testCase)
+        {
+	        var bytes = testCase.InputString != null
+		        ? Encoding.UTF8.GetBytes(testCase.InputString)
+		        : testCase.Input;
+	        var actual = Scanner.ScanTokens(bytes,
+		        "", Pos.CreateForFile(""), ScanMode.Template).ToArray();
+	        
+	        CompareTokens(actual, testCase.ExpectedTokens);
+        }
 
         private void CompareTokens(Token[] actual, ExpectedToken[] expected)
         {
@@ -2912,22 +2925,24 @@ EOF
 			        },
 		        }
 	        }
-		        .Select((tc, i) =>
-		        {
-			        string input = tc.InputString ?? string.Join("", tc.Input.Select(b => b.ToString("X")));
-			        return new TestCaseData(tc).SetName($"{i:D2}: Input: {input}");
-		        })
+		        .Select(ToTestCaseData)
 		        .ToArray();
         }
-        
-        private TestCase[] TemplateTestCases()
+
+        private static TestCaseData ToTestCaseData(TestCase tc, int i)
+        {
+	        string input = tc.InputString ?? string.Join("", tc.Input.Select(b => $"\\x{b.ToString("X")}"));
+	        return new TestCaseData(tc).SetName($"{i:D2}: Input: {input}");
+        }
+
+        private static TestCaseData[] TemplateTestCases()
         {
 	        return new[]
 {
 		// Empty input
 		new TestCase
 				{
-					InputString = @"",
+					InputString = "",
 					ExpectedTokens = new []
 					{
 				new ExpectedToken
@@ -2946,7 +2961,7 @@ EOF
 		// Simple literals
 		new TestCase
 				{
-					InputString = @" hello ",
+					InputString = " hello ",
 					ExpectedTokens = new []
 					{
 				new ExpectedToken
@@ -2973,7 +2988,7 @@ EOF
 		},
 		new TestCase
 				{
-					InputString = @"\nhello\n",
+					InputString = "\nhello\n",
 					ExpectedTokens = new []
 					{
 				new ExpectedToken
@@ -3010,7 +3025,7 @@ EOF
 		},
 		new TestCase
 				{
-					InputString = @"hello ${foo} hello",
+					InputString = "hello ${foo} hello",
 					ExpectedTokens = new []
 					{
 				new ExpectedToken
@@ -3077,7 +3092,7 @@ EOF
 		},
 		new TestCase
 				{
-					InputString = @"hello ${~foo~} hello",
+					InputString = "hello ${~foo~} hello",
 					ExpectedTokens = new []
 					{
 				new ExpectedToken
@@ -3142,7 +3157,9 @@ EOF
 						},
 			},
 		},
-            };
+            }
+		        .Select(ToTestCaseData)
+		        .ToArray();;
         }
 
         public class TestCase

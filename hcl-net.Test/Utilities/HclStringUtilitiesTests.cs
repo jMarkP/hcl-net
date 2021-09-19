@@ -10,7 +10,7 @@ namespace hcl_net.Test.Utilities
     [TestFixture]
     class HclStringUtilitiesTests
     {
-        [TestCaseSource("Unquote")]
+        [TestCaseSource(nameof(Unquote))]
         public void Unquote_ProcessesStringsCorrectly(KeyValuePair<string, string> testCase)
         {
             var input = testCase.Key;
@@ -39,7 +39,7 @@ namespace hcl_net.Test.Utilities
             Assert.That(result, Is.Not.Null, invalidString);
         }
 
-        private static KeyValuePair<string, string>[] Unquote()
+        private static TestCaseData[] Unquote()
         {
             return new Dictionary<string, string>
             {
@@ -66,7 +66,9 @@ namespace hcl_net.Test.Utilities
                 {@"""\u263a""", "\u263a" },
                 {@"""\U0010ffff""","\U0010ffff"},
                 {@"""\x04""", "\x04"}
-            }.Select(x => new KeyValuePair<string, string>(x.Key, x.Value)).ToArray();
+            }.Select(x => new KeyValuePair<string, string>(x.Key, x.Value))
+                .Select((x, i) => new TestCaseData(x).SetName($"{i:D2}"))
+                .ToArray();
         }
 
         private static string[] InvalidStrings()
