@@ -8,7 +8,7 @@ define run_ragel
 	rm $(patsubst /work/%.cs.rl,%.ri,$(1))
 endef
 
-all: scan_tokens.cs scan_string_lit.cs
+all: ScanTokens.cs ScanStringLiteral.cs
 
 %.cs: %.cs.rl
 	$(call run_ragel,/work/$<)

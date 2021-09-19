@@ -7,7 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="v2\hclsyntax\scan_string_lit.cs.rl" />
+    <None Include="v2\hclsyntax\ScanStringLiteral.cs.rl" />
     <None Include="v2\hclsyntax\ScanTokens.cs.rl" />
     <None Include="v2\hclsyntax\unicode_derived.rl" />
     <None Include="v2\hclsyntax\Makefile" />

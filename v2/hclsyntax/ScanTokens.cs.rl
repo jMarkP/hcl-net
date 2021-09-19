@@ -1,15 +1,15 @@
-// This file is generated from scan_tokens.cs.rl. DO NOT EDIT.
+// This file is generated from ScanTokens.cs.rl. DO NOT EDIT.
 using System;
 using System.Linq;
 using System.Collections.Generic;
 
 namespace hcl_net.v2.hclsyntax
 {
-    internal static class Scanner
+    internal static partial class Scanner
     {
         #region State machine data
 %%{
-  # (except when you are actually in scan_tokens.cs.rl here, so edit away!)
+  # (except when you are actually in ScanTokens.cs.rl here, so edit away!)
 
   machine hcltok;
   write data;
