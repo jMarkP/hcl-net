@@ -242,3 +242,5 @@ ModelManifest.xml
 .fake/
 
 .DS_Store
+
+**/results/coverage.opencover.xml
