@@ -17,11 +17,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\hcl-net.csproj" />
+    <ProjectReference Include="..\hcl-net\hcl-net.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <None Remove="Utilities\InvalidStrings.txt" />
     <EmbeddedResource Include="Utilities\InvalidStrings.txt" />
   </ItemGroup>
 </Project>

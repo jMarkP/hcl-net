@@ -10,7 +10,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\hcl-net.csproj" />
+      <ProjectReference Include="..\hcl-net\hcl-net.csproj" />
     </ItemGroup>
 
 </Project>
