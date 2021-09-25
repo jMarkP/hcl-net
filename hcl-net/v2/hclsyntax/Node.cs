@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using cty_net;
@@ -20,7 +19,7 @@ namespace hcl_net.v2.hclsyntax
         public abstract void WalkChildNodes(InternalWalkFunc func);
     }
 
-    internal abstract class Expression : Node
+    internal abstract class Expression : Node, IExpression
     {
         protected Expression(Range range) : base(range)
         {
@@ -182,75 +181,6 @@ namespace hcl_net.v2.hclsyntax
         {
             return (Val, null);
         }
-    }
-
-    internal class Traversal : IEnumerable<ITraverser>, IList<ITraverser>
-    {
-        private readonly List<ITraverser> _items = new List<ITraverser>();
-        public IEnumerator<ITraverser> GetEnumerator()
-        {
-            return ((IEnumerable<ITraverser>)_items).GetEnumerator();
-        }
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return ((IEnumerable) _items).GetEnumerator();
-        }
-
-        public void Add(ITraverser item)
-        {
-            _items.Add(item);
-        }
-
-        public void Clear()
-        {
-            _items.Clear();
-        }
-
-        public bool Contains(ITraverser item)
-        {
-            return _items.Contains(item);
-        }
-
-        public void CopyTo(ITraverser[] array, int arrayIndex)
-        {
-            _items.CopyTo(array, arrayIndex);
-        }
-
-        public bool Remove(ITraverser item)
-        {
-            return _items.Remove(item);
-        }
-
-        public int Count => _items.Count;
-
-        public bool IsReadOnly => ((ICollection<ITraverser>) _items).IsReadOnly;
-
-        public int IndexOf(ITraverser item)
-        {
-            return _items.IndexOf(item);
-        }
-
-        public void Insert(int index, ITraverser item)
-        {
-            _items.Insert(index, item);
-        }
-
-        public void RemoveAt(int index)
-        {
-            _items.RemoveAt(index);
-        }
-
-        public ITraverser this[int index]
-        {
-            get => _items[index];
-            set => _items[index] = value;
-        }
-    }
-
-    internal interface ITraverser
-    {
-        
     }
 
     internal static class NodeWalkerExtensions

@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using cty_net;
-using hcl_net.v2.hclsyntax;
 
 namespace hcl_net.v2
 {
@@ -27,21 +26,5 @@ namespace hcl_net.v2
         public Dictionary<string, Value> Variables { get; } = new();
         public Dictionary<string, Function> Functions { get; } = new ();
         public EvalContext? Parent { get; }
-    }
-
-    internal class StaticCall
-    {
-        public StaticCall(string name, Range nameRange, Expression[] arguments, Range argsRange)
-        {
-            Name = name;
-            NameRange = nameRange;
-            Arguments = arguments;
-            ArgsRange = argsRange;
-        }
-
-        public string Name { get; }
-        public Range NameRange { get; }
-        public Expression[] Arguments { get; }
-        public Range ArgsRange { get; }
     }
 }
