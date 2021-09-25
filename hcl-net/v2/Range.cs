@@ -1,12 +1,12 @@
 using System;
 
-namespace hcl_net.v2.hclsyntax
+namespace hcl_net.v2
 {
-    internal readonly struct TokenRange
+    internal readonly struct Range
     {
         private readonly byte[] _fileContents;
 
-        public TokenRange(string filename, byte[] fileContents, Pos start, Pos end)
+        public Range(string filename, byte[] fileContents, Pos start, Pos end)
         {
             _fileContents = fileContents;
             Filename = filename;

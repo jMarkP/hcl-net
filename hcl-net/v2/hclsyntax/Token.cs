@@ -6,14 +6,14 @@ namespace hcl_net.v2.hclsyntax
 {
     internal readonly struct Token
     {
-        public Token(TokenType type, TokenRange range)
+        public Token(TokenType type, Range range)
         {
             Type = type;
             Range = range;
         }
 
         public TokenType Type { get; }
-        public TokenRange Range { get; }
+        public Range Range { get; }
 
         public Span<byte> GetBytes() => Range.GetBytes();
 

@@ -1,4 +1,6 @@
-namespace hcl_net.v2.hclsyntax
+using hcl_net.v2.hclsyntax;
+
+namespace hcl_net.v2
 {
     internal readonly struct Diagnostic
     {
@@ -6,8 +8,8 @@ namespace hcl_net.v2.hclsyntax
             DiagnosticSeverity severity,
             string summary = default,
             string detail = default,
-            TokenRange? subject = default,
-            TokenRange? context = default)
+            Range? subject = default,
+            Range? context = default)
         {
             Severity = severity;
             Summary = summary;
@@ -19,9 +21,9 @@ namespace hcl_net.v2.hclsyntax
         public DiagnosticSeverity Severity { get; }
         public string Summary { get; }
         public string Detail { get; }
-        public TokenRange? Subject { get; }
+        public Range? Subject { get; }
 
-        public TokenRange? Context { get; }
+        public Range? Context { get; }
         // public Expression Expression { get; }
         // public EvalContext EvalContext { get; }
     }

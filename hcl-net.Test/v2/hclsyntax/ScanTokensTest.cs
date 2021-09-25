@@ -1,5 +1,6 @@
 using System.Linq;
 using System.Text;
+using hcl_net.v2;
 using hcl_net.v2.hclsyntax;
 using NUnit.Framework;
 

@@ -1,4 +1,4 @@
-namespace hcl_net.v2.hclsyntax
+namespace hcl_net.v2
 {
     internal enum DiagnosticSeverity
     {

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 
-namespace hcl_net.v2.hclsyntax
+namespace hcl_net.v2
 {
     internal struct Pos
     {

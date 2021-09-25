@@ -6,6 +6,7 @@ using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
+using hcl_net.v2;
 using hcl_net.v2.hclsyntax;
 
 namespace hcldec

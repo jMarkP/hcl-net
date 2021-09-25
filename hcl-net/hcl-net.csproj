@@ -4,6 +4,7 @@
     <TargetFramework>net5.0</TargetFramework>
     <RootNamespace>hcl_net</RootNamespace>
     <AssemblyName>hcl-net</AssemblyName>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>
@@ -28,6 +29,10 @@
   <ItemGroup>
     <EmbeddedResource Remove="hcl-net.Test\**" />
     <EmbeddedResource Remove="hcldec\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\cty-net\cty-net\cty-net.csproj" />
   </ItemGroup>
 
 </Project>
