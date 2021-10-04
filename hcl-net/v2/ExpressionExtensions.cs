@@ -6,39 +6,39 @@ namespace hcl_net.v2
 {
     internal static class ExpressionExtensions
     {
-        public static (StaticCall?, Diagnostic[]?) ExprCall(this IExpression expr)
+        public static (StaticCall?, Diagnostics) ExprCall(this IExpression expr)
         {
             return Transform(expr, (IExprCall x) => x.ExprCall(), "A static function call is required.");
         }
 
-        public static (IExpression[]?, Diagnostic[]?) ExprList(this IExpression expr)
+        public static (IExpression[]?, Diagnostics) ExprList(this IExpression expr)
         {
             return Transform(expr, (IExprList x) => x.ExprList(), "A static list expression is required.");
         }
 
-        public static (IDictionary<IExpression, IExpression>?, Diagnostic[]?) ExprMap(this IExpression expr)
+        public static (IDictionary<IExpression, IExpression>?, Diagnostics) ExprMap(this IExpression expr)
         {
             return Transform(expr, (IExprMap x) => x.ExprMap(), "A static map expression is required");
         }
 
-        private static (TOut?, Diagnostic[]?) Transform<TImpl, TOut>(this IExpression expr, Func<TImpl, TOut> map, string errorDetail) 
+        private static (TOut?, Diagnostics) Transform<TImpl, TOut>(this IExpression expr, Func<TImpl, TOut> map, string errorDetail) 
             where TImpl : class
             where TOut : class
         {
             var impl = expr.UnwrapExpressionUntilType<TImpl>();
             if (impl != null)
             {
-                return (map(impl), null);
+                return (map(impl), Diagnostics.None);
             }
 
-            return (null, new[]
-            {
+            return (null, new Diagnostics
+            (
                 new Diagnostic(
                     DiagnosticSeverity.Error,
                     "Invalid expression",
                     errorDetail,
                     expr.StartRange)
-            });
+            ));
         }
         
         /// <summary>

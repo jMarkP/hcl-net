@@ -1,6 +1,8 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
+using cty_net;
 
 namespace hcl_net.v2
 {
@@ -12,7 +14,7 @@ namespace hcl_net.v2
             {
                 if (IsRelative)
                 {
-                    throw new Exception("Can't use RootName on a relative traversal");
+                    throw new Exception($"Can't use {nameof(RootName)} on a relative traversal");
                 }
 
                 return ((TraverseRoot) this[0]).Name;
@@ -35,6 +37,60 @@ namespace hcl_net.v2
 
                 return true;
             }
+        }
+        
+        public (Value, Diagnostics) TraverseRel(Value val)
+        {
+            if (!IsRelative)
+            {
+                throw new Exception($"Can't use {nameof(TraverseRel)} on an absolute traversal");
+            }
+
+            var current = val;
+            var diags = new Diagnostics();
+            foreach (var tr in this)
+            {
+                Diagnostics newDiags;
+                (current, newDiags) = tr.TraversalStep(current);
+                diags = diags.Append(newDiags);
+                if (newDiags.HasErrors)
+                {
+                    return (Value.DynamicVal, diags);
+                }
+            }
+            
+            return (current, diags);
+        }
+
+        public (Value, Diagnostics) TraverseAbs(EvalContext ctx)
+        {
+            if (IsRelative)
+            {
+                throw new Exception($"Can't use {nameof(TraverseAbs)} on a relative traversal");
+            }
+
+            var split = SimpleSplit();
+            var root = split.Abs[0] as TraverseRoot;
+            var name = root.Name;
+            var hasVariables = false;
+            EvalContext? currCtx = ctx;
+            while (currCtx != null)
+            {
+                if (!currCtx.Variables.Any())
+                {
+                    currCtx = currCtx.Parent;
+                    continue;
+                }
+
+                hasVariables = true;
+                if (currCtx.Variables.TryGetValue(name, out var val))
+                {
+                    return split.Rel.TraverseRel(val);
+                }
+
+                currCtx = currCtx.Parent;
+            }
+            if (hasVariables)
         }
         
         #region IList implementation
@@ -99,6 +155,7 @@ namespace hcl_net.v2
             set => _items[index] = value;
         }
         #endregion
+
     }
 
     internal class TraverseRoot : ITraverser
@@ -106,10 +163,15 @@ namespace hcl_net.v2
         public TraverseRoot(string name, Range srcRange)
         {
             Name = name;
-            SrcRange = srcRange;
+            SourceRange = srcRange;
         }
 
         public string Name { get; }
-        public Range SrcRange { get; }
+        public Range SourceRange { get; }
+        
+        public (Value, Diagnostics) TraversalStep(Value val)
+        {
+            throw new NotImplementedException("Cannot traverse an absolute traversal");
+        }
     }
 }

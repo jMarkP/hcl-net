@@ -26,7 +26,7 @@ namespace hcl_net.v2.hclsyntax
             StartRange = range;
         }
         
-        public abstract (Value, Diagnostic[]?) Value(EvalContext ctx);
+        public abstract (Value, Diagnostics) Value(EvalContext ctx);
 
         public Traversal[] Variables()
         {
@@ -111,7 +111,7 @@ namespace hcl_net.v2.hclsyntax
             func(Expr);
         }
 
-        public override (Value, Diagnostic[]?) Value(EvalContext ctx)
+        public override (Value, Diagnostics) Value(EvalContext ctx)
         {
             throw new NotImplementedException();
         }
@@ -135,7 +135,7 @@ namespace hcl_net.v2.hclsyntax
             // Scope traversals have no child nodes
         }
 
-        public override (Value, Diagnostic[]?) Value(EvalContext ctx)
+        public override (Value, Diagnostics) Value(EvalContext ctx)
         {
             var (val, diags) = Traversal.TraverseAbs(ctx);
             setDiagEvalContext(diags, this, ctx);
@@ -157,7 +157,7 @@ namespace hcl_net.v2.hclsyntax
             func(Inner);
         }
 
-        public override (Value, Diagnostic[]?) Value(EvalContext ctx)
+        public override (Value, Diagnostics) Value(EvalContext ctx)
         {
             throw new NotImplementedException();
         }
@@ -177,7 +177,7 @@ namespace hcl_net.v2.hclsyntax
             // Literal values have no child nodes
         }
 
-        public override (Value, Diagnostic[]?) Value(EvalContext ctx)
+        public override (Value, Diagnostics) Value(EvalContext ctx)
         {
             return (Val, null);
         }

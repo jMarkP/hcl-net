@@ -13,7 +13,7 @@ namespace hcl_net.v2
         /// </summary>
         /// <param name="schema"></param>
         /// <returns></returns>
-        (BodyContent, Diagnostic[]?) Content(BodySchema schema);
+        (BodyContent, Diagnostics) Content(BodySchema schema);
         /// <summary>
         /// PartialContent is like Content except that it permits the configuration
         /// to contain additional blocks or attributes not specified in the
@@ -22,7 +22,7 @@ namespace hcl_net.v2
         /// </summary>
         /// <param name="schema"></param>
         /// <returns></returns>
-        (BodyContent, IBody, Diagnostic[]?) PartialContent(BodySchema schema);
+        (BodyContent, IBody, Diagnostics) PartialContent(BodySchema schema);
 
         /// <summary>
         /// JustAttributes attempts to interpret all of the contents of the body
@@ -38,7 +38,7 @@ namespace hcl_net.v2
         /// declarations of the same attribute.
         /// </summary>
         /// <returns></returns>
-        (IDictionary<string, Attribute>, Diagnostic[]?) JustAttributes();
+        (IDictionary<string, Attribute>, Diagnostics) JustAttributes();
 
         /// <summary>
         /// MissingItemRange returns a range that represents where a missing item

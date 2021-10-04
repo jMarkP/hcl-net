@@ -30,7 +30,7 @@ namespace hcl_net.v2
         /// </summary>
         /// <param name="ctx"></param>
         /// <returns></returns>
-        (Value, Diagnostic[]?) Value(EvalContext ctx);
+        (Value, Diagnostics) Value(EvalContext ctx);
         /// <summary>
         /// Variables returns a list of variables referenced in the receiving
         /// expression. These are expressed as absolute Traversals, so may include
