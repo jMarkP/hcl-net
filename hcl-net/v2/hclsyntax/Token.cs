@@ -6,8 +6,10 @@ namespace hcl_net.v2.hclsyntax
 {
     internal readonly struct Token
     {
-        public Token(TokenType type, Range range)
+        private readonly byte[] _fileContents;
+        public Token(TokenType type, Range range, byte[] fileContents)
         {
+            _fileContents = fileContents;
             Type = type;
             Range = range;
         }
@@ -15,9 +17,11 @@ namespace hcl_net.v2.hclsyntax
         public TokenType Type { get; }
         public Range Range { get; }
 
-        public Span<byte> GetBytes() => Range.GetBytes();
+        public Span<byte> GetBytes() => Range.Length > 0 
+            ? ((Span<byte>) _fileContents).Slice(Range.Start.Byte, Range.Length)
+            : Span<byte>.Empty;
 
-        public byte this[int index] => Range[index];
+        public byte this[int index] => _fileContents[Range.Start.Byte + index];
 
         public string String => GetBytes().Length > 0 ? Encoding.UTF8.GetString(GetBytes()) : "";
 

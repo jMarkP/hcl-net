@@ -35,4 +35,8 @@
     <ProjectReference Include="..\..\cty-net\cty-net\cty-net.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Fastenshtein" Version="1.0.0.7" />
+  </ItemGroup>
+
 </Project>

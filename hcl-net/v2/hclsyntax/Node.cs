@@ -138,11 +138,11 @@ namespace hcl_net.v2.hclsyntax
         public override (Value, Diagnostics) Value(EvalContext ctx)
         {
             var (val, diags) = Traversal.TraverseAbs(ctx);
-            setDiagEvalContext(diags, this, ctx);
+            diags.SetEvalContext(this, ctx);
             return (val, diags);
         }
     }
-    
+
     internal class ParenthesesExpression : Expression
     {
         public ParenthesesExpression(Range range, Expression inner) : base(range)

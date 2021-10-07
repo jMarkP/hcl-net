@@ -4,11 +4,8 @@ namespace hcl_net.v2
 {
     internal readonly struct Range
     {
-        private readonly byte[] _fileContents;
-
-        public Range(string filename, byte[] fileContents, Pos start, Pos end)
+        public Range(string filename, Pos start, Pos end)
         {
-            _fileContents = fileContents;
             Filename = filename;
             Start = start;
             End = end;
@@ -19,11 +16,13 @@ namespace hcl_net.v2
         public Pos Start { get; }
         public Pos End { get; }
         public int Length { get; }
-
-        public Span<byte> GetBytes() => Length > 0 
-            ? ((Span<byte>) _fileContents).Slice(Start.Byte, Length)
-            : Span<byte>.Empty;
-
-        public byte this[int index] => _fileContents[Start.Byte + index];
+        
+        public static Range Between(Range start, Range end)
+        {
+            return new Range(
+                filename: start.Filename,
+                start: start.Start,
+                end: end.End);
+        }
     }
 }

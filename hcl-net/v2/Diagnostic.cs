@@ -27,17 +27,16 @@ namespace hcl_net.v2
         public Range? Subject { get; }
 
         public Range? Context { get; }
-        // public Expression Expression { get; }
-        // public EvalContext EvalContext { get; }
+        public Expression? Expression { get; internal set; }
+        public EvalContext? EvalContext { get; internal set; }
     }
 
     internal class Diagnostics : IEnumerable<Diagnostic>
     {
         public static readonly Diagnostics None = new ();
 
-        public Diagnostics(Diagnostic item)
+        public Diagnostics(Diagnostic item) : this(new[] {item})
         {
-            _items = new[] {item};
         }
         public Diagnostics(params Diagnostic[] items)
         {
@@ -77,5 +76,18 @@ namespace hcl_net.v2
         }
 
         public bool HasErrors => this.Any(d => d.Severity == DiagnosticSeverity.Error);
+        
+        
+        public void SetEvalContext(Expression expr, EvalContext ctx)
+        {
+            foreach (var diag in this)
+            {
+                if (diag.Expression == null)
+                {
+                    diag.Expression = expr;
+                    diag.EvalContext = ctx;
+                }
+            }
+        }
     }
 }
