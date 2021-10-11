@@ -5,27 +5,26 @@ using cty_net;
 
 namespace hcl_net.v2.hclsyntax
 {
-    using InternalWalkFunc = Action<Node>;
+    using InternalWalkFunc = Action<INode>;
     
-    internal abstract class Node
+    internal interface INode
     {
-        protected Node(Range range)
-        {
-            Range = range;
-        }
+        Range Range { get; }
 
-        public Range Range { get; }
-
-        public abstract void WalkChildNodes(InternalWalkFunc func);
+        void WalkChildNodes(InternalWalkFunc func);
     }
 
-    internal abstract class Expression : Node, IExpression
+    internal abstract class Expression : INode, IExpression
     {
-        protected Expression(Range range) : base(range)
+        protected Expression(Range range)
         {
+            Range = range;
             StartRange = range;
         }
         
+        public Range Range { get; }
+        public abstract void WalkChildNodes(InternalWalkFunc func);
+
         public abstract (Value, Diagnostics) Value(EvalContext ctx);
 
         public Traversal[] Variables()
@@ -49,7 +48,7 @@ namespace hcl_net.v2.hclsyntax
             _callback = callback;
         }
 
-        public IEnumerable<Diagnostic>? Enter(Node node)
+        public IEnumerable<Diagnostic>? Enter(INode node)
         {
             if (node is ScopeTraversalExpression scopeTraversal)
             {
@@ -75,7 +74,7 @@ namespace hcl_net.v2.hclsyntax
             return null;
         }
 
-        public IEnumerable<Diagnostic>? Exit(Node node)
+        public IEnumerable<Diagnostic>? Exit(INode node)
         {
             if (node is ChildScope childScope)
             {
@@ -185,7 +184,7 @@ namespace hcl_net.v2.hclsyntax
 
     internal static class NodeWalkerExtensions
     {
-        public static IEnumerable<Diagnostic> Walk(this IWalker walker, Node node)
+        public static IEnumerable<Diagnostic> Walk(this IWalker walker, INode node)
         {
             var diags = walker.Enter(node);
             node.WalkChildNodes(n =>
@@ -200,7 +199,7 @@ namespace hcl_net.v2.hclsyntax
 
     internal interface IWalker
     {
-        IEnumerable<Diagnostic>? Enter(Node node);
-        IEnumerable<Diagnostic>? Exit(Node node);
+        IEnumerable<Diagnostic>? Enter(INode node);
+        IEnumerable<Diagnostic>? Exit(INode node);
     }
 }
