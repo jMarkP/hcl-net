@@ -11,7 +11,7 @@ namespace hcl_net.v2.hclsyntax
     {
         Range Range { get; }
 
-        void WalkChildNodes(InternalWalkFunc func);
+        void WalkChildNodes(InternalWalkFunc walker);
     }
 
     internal abstract class Expression : INode, IExpression

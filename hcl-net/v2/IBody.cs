@@ -38,7 +38,7 @@ namespace hcl_net.v2
         /// declarations of the same attribute.
         /// </summary>
         /// <returns></returns>
-        (IDictionary<string, Attribute>, Diagnostics) JustAttributes();
+        (Attributes, Diagnostics) JustAttributes();
 
         /// <summary>
         /// MissingItemRange returns a range that represents where a missing item

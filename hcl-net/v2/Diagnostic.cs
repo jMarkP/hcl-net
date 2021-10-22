@@ -57,6 +57,11 @@ namespace hcl_net.v2
         #endregion
 
         public int Length => _items.Length;
+
+        public Diagnostics Append(Diagnostic item)
+        {
+            return new Diagnostics(((IEnumerable<Diagnostic>) this).Append(item).ToArray());
+        }
         
         public Diagnostics Append(Diagnostics other)
         {

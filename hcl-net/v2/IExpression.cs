@@ -7,7 +7,7 @@ namespace hcl_net.v2
     /// Expression is a literal value or an expression provided in the
     /// configuration, which can be evaluated within a scope to produce a value.
     /// </summary>
-    internal interface IExpression
+    internal interface IExpression : INode
     {
         /// <summary>
         /// Value returns the value resulting from evaluating the expression

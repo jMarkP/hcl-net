@@ -4,15 +4,15 @@ namespace hcl_net.v2
 {
     internal class BodyContent
     {
-        public BodyContent(IDictionary<string, Attribute> attributes, Block[] blocks, Range missingItemRange)
+        public BodyContent(Attributes attributes, Blocks blocks, Range missingItemRange)
         {
             Attributes = attributes;
             Blocks = blocks;
             MissingItemRange = missingItemRange;
         }
 
-        public IDictionary<string, Attribute> Attributes { get; }
-        public Block[] Blocks { get; }
+        public Attributes Attributes { get; }
+        public Blocks Blocks { get; }
         public Range MissingItemRange { get; }
     }
 }

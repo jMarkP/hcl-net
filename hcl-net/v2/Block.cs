@@ -1,3 +1,7 @@
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
+
 namespace hcl_net.v2
 {
     /// <summary>
@@ -31,5 +35,47 @@ namespace hcl_net.v2
         /// Ranges for the label values specifically.
         /// </summary>
         public Range[] LabelRanges { get; }
+    }
+    
+    internal class Blocks : IEnumerable<Block>
+    {
+        private readonly Block[] _items;
+
+        public Blocks(Block[] items)
+        {
+            _items = items;
+        }
+
+        public IEnumerator<Block> GetEnumerator()
+        {
+            return ((IEnumerable<Block>)_items).GetEnumerator();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return _items.GetEnumerator();
+        }
+        public int Length => _items.Length;
+        
+        public Blocks Append(Block item)
+        {
+            return new Blocks(((IEnumerable<Block>) this).Append(item).ToArray());
+        }
+        public Blocks Append(Blocks other)
+        {
+            // Avoid needless allocations if
+            // append would be a no-op
+            // (This class is immutable so this is safe)
+            if (other.Length == 0)
+            {
+                return this;
+            }
+            if (this.Length == 0)
+            {
+                return other;
+            }
+
+            return new(this.Concat(other).ToArray());
+        }
     }
 }
