@@ -24,5 +24,12 @@ namespace hcl_net.v2
                 start: start.Start,
                 end: end.End);
         }
+
+        public override string ToString()
+        {
+            return Start.Line == End.Line
+                ? $"{Filename}:{Start.Line},{Start.Column}-{End.Column}"
+                : $"{Filename}:{Start.Line},{Start.Column}-{End.Line},{End.Column}";
+        }
     }
 }

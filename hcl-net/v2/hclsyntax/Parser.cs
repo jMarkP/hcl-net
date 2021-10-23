@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 
 namespace hcl_net.v2.hclsyntax
 {
@@ -151,11 +152,15 @@ namespace hcl_net.v2.hclsyntax
         }
     }
     
-    
     internal class Blocks : IEnumerable<Block>, INode
     {
         private readonly Block[] _items;
 
+        public Blocks()
+        {
+            _items = Array.Empty<Block>();
+        }
+        
         public Blocks(Block[] items)
         {
             _items = items;
@@ -169,6 +174,29 @@ namespace hcl_net.v2.hclsyntax
         IEnumerator IEnumerable.GetEnumerator()
         {
             return _items.GetEnumerator();
+        }
+        
+        public int Length => _items.Length;
+        
+        public Blocks Append(Block item)
+        {
+            return new Blocks(((IEnumerable<Block>) this).Append(item).ToArray());
+        }
+        public Blocks Append(Blocks other)
+        {
+            // Avoid needless allocations if
+            // append would be a no-op
+            // (This class is immutable so this is safe)
+            if (other.Length == 0)
+            {
+                return this;
+            }
+            if (this.Length == 0)
+            {
+                return other;
+            }
+
+            return new(this.Concat(other).ToArray());
         }
 
         public Range Range
@@ -234,12 +262,32 @@ namespace hcl_net.v2.hclsyntax
     }
     internal class Body : IBody, INode
     {
+        public Body(Range srcRange, Range endRange)
+        {
+            Attributes = new Attributes();
+            Blocks = new Blocks();
+            HiddenAttrs = new Dictionary<string, object>();
+            HiddenBlocks = new Dictionary<string, object>();
+            SrcRange = srcRange;
+            EndRange = endRange;
+        }
+        
         public Body(Attributes attributes, Blocks blocks, Dictionary<string, object> hiddenAttrs, Dictionary<string, object> hiddenBlocks, Range srcRange, Range endRange)
         {
             Attributes = attributes;
             Blocks = blocks;
             HiddenAttrs = hiddenAttrs;
             HiddenBlocks = hiddenBlocks;
+            SrcRange = srcRange;
+            EndRange = endRange;
+        }
+        
+        public Body(Attributes attributes, Blocks blocks, Range srcRange, Range endRange)
+        {
+            Attributes = attributes;
+            Blocks = blocks;
+            HiddenAttrs = new Dictionary<string, object>();
+            HiddenBlocks = new Dictionary<string, object>();
             SrcRange = srcRange;
             EndRange = endRange;
         }
@@ -481,9 +529,466 @@ namespace hcl_net.v2.hclsyntax
     }
     internal class Parser
     {
+        private Range PrevRange { get; set; }
+        private Range NextRange { get; set; }
+        
+        /// <summary>
+        /// set to true if any recovery is attempted. The parser can use this
+        /// to attempt to reduce error noise by suppressing "bad token" errors
+        /// in recovery mode, assuming that the recovery heuristics have failed
+        /// in this case and left the peeker in a wrong place.
+        /// </summary>
+        private bool Recovery { get; set; }
+        
         public (Body, Diagnostics) ParseBody(TokenType end)
         {
+            var attrs = new Attributes();
+            var blocks = new Blocks();
+            var diags = Diagnostics.None;
+
+            var startRange = PrevRange;
+            Range endRange;
+
+            while (true)
+            {
+                var next = Peek();
+                if (next.Type == end)
+                {
+                    endRange = NextRange;
+                    Read();
+                    goto ParseBodyLoopEnd;
+                }
+
+                switch (next.Type)
+                {
+                    case TokenType.TokenNewline:
+                        Read();
+                        continue;
+                    case TokenType.TokenIdent:
+                        var (item, itemDiags) = ParseBodyItem();
+                        diags = diags.Append(itemDiags);
+                        switch (item)
+                        {
+                            case Block block:
+                                blocks = blocks.Append(block);
+                                break;
+                            case Attribute attr:
+                                if (attrs.TryGetValue(attr.Name, out var existing))
+                                {
+                                    diags = diags.Append(new Diagnostic(
+                                        severity: DiagnosticSeverity.Error,
+                                        summary: "Attribute redefined",
+                                        detail: $"The argument {attr.Name} was already set at {existing.NameRange.ToString()}. Each argument may be set only once.",
+                                        subject: attr.NameRange));
+                                }
+                                else
+                                {
+                                    attrs[attr.Name] = attr;
+                                }
+
+                                break;
+                            default:
+                                // This should never happen for valid input, but may if a
+                                // syntax error was detected in ParseBodyItem that prevented
+                                // it from even producing a partially-broken item. In that
+                                // case, it would've left at least one error in the diagnostics
+                                // slice we already dealt with above.
+                                //
+                                // We'll assume ParseBodyItem attempted recovery to leave
+                                // us in a reasonable position to try parsing the next item.
+                                continue;
+                        }
+                        break;
+                    default:
+                        var bad = Read();
+                        if (!Recovery)
+                        {
+                            if (bad.Type == TokenType.TokenOQuote)
+                            {
+                                diags = diags.Append(new Diagnostic(
+                                    severity: DiagnosticSeverity.Error,
+                                    summary: "Invalid argument name",
+                                    detail: "Argument names must not be quoted",
+                                    subject: bad.Range));
+                            }
+                            else
+                            {
+                                diags = diags.Append(new Diagnostic(
+                                    severity: DiagnosticSeverity.Error,
+                                    summary: "Argument or block definition required",
+                                    detail: "An argument or block definition is required here.",
+                                    subject: bad.Range));
+                            }
+                        }
+
+                        endRange = PrevRange; // arbitrary, but somewhere inside the body means better diagnostics
+                        Recover(end); // attempt to recover to the token after the end of this body
+                        goto ParseBodyLoopEnd;
+                }
+            }
+            ParseBodyLoopEnd:
+            return (new Body(attrs, blocks, Range.Between(startRange, endRange),
+                new Range(endRange.Filename, endRange.End, endRange.End)), diags);
+        }
+        
+        public (INode?, Diagnostics) ParseBodyItem()
+        {
+            var ident = Read();
+            if (ident.Type != TokenType.TokenIdent)
+            {
+                RecoverAfterBodyItem();
+                return (null, new Diagnostics(new Diagnostic(
+                    severity: DiagnosticSeverity.Error,
+                    summary: "Argument or block definition required",
+                    detail: "An argument or block definition is required here.",
+                    subject: ident.Range)));
+            }
+
+            var next = Peek();
+            switch (next.Type)
+            {
+                case TokenType.TokenEqual:
+                    return FinishParsingBodyAttribute(ident, false);
+                case TokenType.TokenOQuote:
+                case TokenType.TokenOBrace:
+                case TokenType.TokenIdent:
+                    return FinishParsingBodyBlock(ident);
+                default:
+                    RecoverAfterBodyItem();
+                    
+                    return (null, new Diagnostics(new Diagnostic(
+                        severity: DiagnosticSeverity.Error,
+                        summary: "Argument or block definition required",
+                        detail: "An argument or block definition is required here.",
+                        subject: ident.Range)));
+            }
+        }
+        
+        public (Expression, Diagnostics) ParseExpression()
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// parseSingleAttrBody is a weird variant of ParseBody that deals with the
+        /// body of a nested block containing only one attribute value all on a single
+        /// line, like foo { bar = baz } . It expects to find a single attribute item
+        /// immediately followed by the end token type with no intervening newlines.
+        /// </summary>
+        /// <param name="end"></param>
+        /// <returns></returns>
+        private (Body?, Diagnostics) ParseSingleAttrBody(TokenType end)
+        {
+            var ident = Read();
+            if (ident.Type != TokenType.TokenIdent)
+            {
+                RecoverAfterBodyItem();
+                return (null, new Diagnostics(new Diagnostic(
+                    severity: DiagnosticSeverity.Error,
+                    summary: "Argument or block definition required",
+                    detail: "An argument or block definition is required here.",
+                    subject: ident.Range)));
+            }
+
+            var diags = Diagnostics.None;
+            var next = Peek();
+            switch (next.Type)
+            {
+                case TokenType.TokenEqual:
+                    var (attr, attrDiags) = FinishParsingBodyAttribute(ident, false);
+                    diags = diags.Append(attrDiags);
+                    return (new Body(
+                        new Attributes()
+                        {
+                            {ident.String, attr}
+                        },
+                        new Blocks(),
+                        attr.SrcRange,
+                        new Range(attr.SrcRange.Filename, attr.SrcRange.End, attr.SrcRange.End)
+                    ), diags);
+                case TokenType.TokenOQuote:
+                case TokenType.TokenOBrace:
+                case TokenType.TokenIdent:
+                    RecoverAfterBodyItem();
+                    
+                    return (null, new Diagnostics(new Diagnostic(
+                        severity: DiagnosticSeverity.Error,
+                        summary: "Argument definition required",
+                        detail: $"A single-line block definition can contain only a single argument. " +
+                                $"If you meant to define argument {ident.String}, use an equals sign to assign it a value. " +
+                                $"To define a nested block, place it on a line of its own within its parent block.",
+                        subject: Range.Between(ident.Range, next.Range))));
+                default:
+                    RecoverAfterBodyItem();
+                    
+                    return (null, new Diagnostics(new Diagnostic(
+                        severity: DiagnosticSeverity.Error,
+                        summary: "Argument or block definition required",
+                        detail: "An argument or block definition is required here. " +
+                                "To set an argument, use the equals sign \"=\" to introduce the argument value.",
+                        subject: ident.Range)));
+            }
+        }
+        
+        private (Attribute, Diagnostics) FinishParsingBodyAttribute(Token ident, bool singleLine)
+        {
+            var eqToken = Read(); // eat equals token
+            if (eqToken.Type != TokenType.TokenEqual)
+            {
+                // should never happen if caller behaves
+                throw new Exception("finishParsingBodyAttribute called with next not equals");
+            }
+
+            Range endRange;
+            var (expr, diags) = ParseExpression();
+            if (Recovery && diags.HasErrors)
+            {
+                // recovery within expressions tends to be tricky, so we've probably
+                // landed somewhere weird. We'll try to reset to the start of a body
+                // item so parsing can continue.
+                endRange = PrevRange;
+                RecoverAfterBodyItem();
+            }
+            else
+            {
+                endRange = PrevRange;
+                if (!singleLine)
+                {
+                    var end = Peek();
+                    if (end.Type != TokenType.TokenNewline && end.Type != TokenType.TokenEOF)
+                    {
+                        if (!Recovery)
+                        {
+                            var summary = "Missing newline after argument";
+                            var detail = "An argument definition must end with a newline.";
+                            if (end.Type == TokenType.TokenComma)
+                            {
+                                summary = "Unexpected comma after argument";
+                                detail = "Argument definitions must be separated by newlines, not commas. " + detail;
+                            }
+                            
+                            diags = diags.Append(new Diagnostic(
+                                severity: DiagnosticSeverity.Error,
+                                summary: summary,
+                                detail: detail,
+                                subject: Range.Between(ident.Range, end.Range)));
+                        }
+
+                        endRange = PrevRange;
+                        RecoverAfterBodyItem();
+                    }
+                    else
+                    {
+                        endRange = PrevRange;
+                        Read(); // eat newline
+                    }
+                }
+            }
+
+            return (new Attribute(ident.String, expr, Range.Between(ident.Range, endRange), ident.Range, eqToken.Range), diags);
+        }
+
+        private (INode, Diagnostics) FinishParsingBodyBlock(Token ident)
+        {
+            var blockType = ident.String;
+            var diags = new Diagnostics();
+            var labels = new List<string>();
+            var labelRanges = new List<Range>();
+
+            Token oBrace;
+            while (true)
+            {
+                var token = Peek();
+                switch (token.Type)
+                {
+                    case TokenType.TokenOBrace:
+                        oBrace = Read();
+                        goto FinishParsingBodyBlockLoopEnd;
+                    case TokenType.TokenOQuote:
+                        var (label, labelRange, labelDiags) = ParseQuotedStringLiteral();
+                        diags = diags.Append(labelDiags);
+                        labels.Add(label);
+                        labelRanges.Add(labelRange);
+                        // parseQuoteStringLiteral recovers up to the closing quote
+                        // if it encounters problems, so we can continue looking for
+                        // more labels and eventually the block body even.
+                        break;
+                    case TokenType.TokenIdent:
+                        token = Read(); // eat token
+                        labels.Add(token.String);
+                        labelRanges.Add(token.Range);
+                        break;
+                    default:
+                        string detail = "";
+                        bool emitDiag = false;
+                        switch (token.Type)
+                        {
+                            case TokenType.TokenEqual:
+                                emitDiag = true;
+                                detail =
+                                    "The equals sign \"=\" indicates an argument definition, and must not be used when defining a block.";
+                                break;
+                            case TokenType.TokenNewline:
+                                emitDiag = true;
+                                detail =
+                                    "A block definition must have block content delimited by \"{\" and \"}\", starting on the same line as the block header.";
+                                break;
+                            default:
+                                if (!Recovery)
+                                {
+                                    emitDiag = true;
+                                    detail =
+                                        "Either a quoted string block label or an opening brace (\"{\") is expected here.";
+                                }
+
+                                break;
+                        }
+
+                        if (emitDiag)
+                        {
+                            diags = diags.Append(new Diagnostic(
+                                severity: DiagnosticSeverity.Error,
+                                summary: "Invalid block definition",
+                                detail: detail,
+                                subject: Range.Between(ident.Range, token.Range)));
+                        }
+                        RecoverAfterBodyItem();
+                        return (new Block(
+                                blockType, 
+                                labels.ToArray(), 
+                                new Body(ident.Range, ident.Range), 
+                                ident.Range, 
+                                labelRanges.ToArray(), 
+                                ident.Range, // Placeholder 
+                                ident.Range // Placeholder
+                            ), diags);
+                }
+            }
             
+            FinishParsingBodyBlockLoopEnd:
+            // Once we fall out here, the peeker is pointed just after our opening
+            // brace, so we can begin our nested body parsing.
+            Body? body;
+            Diagnostics bodyDiags;
+            switch (Peek().Type)
+            {
+                case TokenType.TokenNewline:
+                case TokenType.TokenEOF:
+                case TokenType.TokenCBrace:
+                    (body, bodyDiags) = ParseBody(TokenType.TokenCBrace);
+                    break;
+                default:
+                    // Special one-line, single-attribute block parsing mode.
+                    (body, bodyDiags) = ParseSingleAttrBody(TokenType.TokenCBrace);
+                    switch (Peek().Type)
+                    {
+                        case TokenType.TokenCBrace:
+                            Read(); // the happy path - just consume the closing brace
+                            break;
+                        case TokenType.TokenComma:
+                            // User seems to be trying to use the object-constructor
+                            // comma-separated style, which isn't permitted for blocks.
+                        
+                            diags = diags.Append(new Diagnostic(
+                                severity: DiagnosticSeverity.Error,
+                                summary: "Invalid single-argument block definition",
+                                detail: "Single-line block syntax can include only one argument definition. To define multiple arguments, use the multi-line block syntax with one argument definition per line.",
+                                subject: Peek().Range));
+                            Recover(TokenType.TokenCBrace);
+                            break;
+                        case TokenType.TokenNewline:
+                            // We don't allow weird mixtures of single and multi-line syntax.
+                        
+                            diags = diags.Append(new Diagnostic(
+                                severity: DiagnosticSeverity.Error,
+                                summary: "Invalid single-argument block definition",
+                                detail: "An argument definition on the same line as its containing block creates a single-line block definition, which must also be closed on the same line. Place the block's closing brace immediately after the argument definition.",
+                                subject: Peek().Range));
+                            Recover(TokenType.TokenCBrace);
+                            break;
+                        default:
+                            // Some other weird thing is going on. Since we can't guess a likely
+                            // user intent for this one, we'll skip it if we're already in
+                            // recovery mode.
+                            if (!Recovery)
+                            {
+                                diags = diags.Append(new Diagnostic(
+                                    severity: DiagnosticSeverity.Error,
+                                    summary: "Invalid single-argument block definition",
+                                    detail: "A single-line block definition must end with a closing brace immediately after its single argument definition.",
+                                    subject: Peek().Range));
+                            }
+                            Recover(TokenType.TokenCBrace);
+                            break;
+                    }
+
+                    break;
+            }
+
+            diags = diags.Append(bodyDiags);
+            var cBraceRange = PrevRange;
+            var eol = Peek();
+            if (eol.Type == TokenType.TokenNewline || eol.Type == TokenType.TokenEOF)
+            {
+                Read(); // eat newline
+            }
+            else
+            {
+                if (!Recovery)
+                {
+                    diags = diags.Append(new Diagnostic(
+                        severity: DiagnosticSeverity.Error,
+                        summary: "Missing newline after block definition",
+                        detail: "A block definition must end with a newline.",
+                        subject: eol.Range,
+                        context: Range.Between(ident.Range, eol.Range)));
+                }
+                RecoverAfterBodyItem();
+            }
+            
+            // We must never produce a null body, since the caller may attempt to
+            // do analysis of a partial result when there's an error, so we'll
+            // insert a placeholder if we otherwise failed to produce a valid
+            // body due to one of the syntax error paths above.
+            if (body == null)
+            {
+                body = new Body(Range.Between(oBrace.Range, cBraceRange), cBraceRange);
+            }
+
+            return (new Block(
+                blockType,
+                labels.ToArray(),
+                body,
+                ident.Range,
+                labelRanges.ToArray(),
+                oBrace.Range,
+                cBraceRange), diags);
+        }
+
+        private (string, Range, Diagnostics) ParseQuotedStringLiteral()
+        {
+            throw new NotImplementedException();
+        }
+
+
+        private void RecoverAfterBodyItem()
+        {
+            throw new NotImplementedException();
+        }
+
+        private void Recover(TokenType end)
+        {
+            throw new NotImplementedException();
+        }
+
+        private Token Read()
+        {
+            throw new NotImplementedException();
+        }
+
+        private Token Peek()
+        {
+            throw new NotImplementedException();
         }
     }
 }
