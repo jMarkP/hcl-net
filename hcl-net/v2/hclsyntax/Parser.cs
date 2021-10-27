@@ -663,11 +663,6 @@ namespace hcl_net.v2.hclsyntax
                         subject: ident.Range)));
             }
         }
-        
-        public (Expression, Diagnostics) ParseExpression()
-        {
-            throw new NotImplementedException();
-        }
 
         /// <summary>
         /// parseSingleAttrBody is a weird variant of ParseBody that deals with the
@@ -963,6 +958,204 @@ namespace hcl_net.v2.hclsyntax
                 labelRanges.ToArray(),
                 oBrace.Range,
                 cBraceRange), diags);
+        }
+
+        private (Expression, Diagnostics) ParseExpression()
+        {
+            return ParseTernaryConditional();
+        }
+
+        private (Expression, Diagnostics) ParseTernaryConditional()
+        {
+            // The ternary conditional operator (.. ? .. : ..) behaves somewhat
+            // like a binary operator except that the "symbol" is itself
+            // an expression enclosed in two punctuation characters.
+            // The middle expression is parsed as if the ? and : symbols
+            // were parentheses. The "rhs" (the "false expression") is then
+            // treated right-associatively so it behaves similarly to the
+            // middle in terms of precedence.
+
+            var startRange = NextRange;
+            var diags = Diagnostics.None;
+
+            var (condExpr, condDiags) = ParseBinaryOps(Operation.BinaryOps);
+            diags = diags.Append(condDiags);
+            if (Recovery && condDiags.HasErrors)
+            {
+                return (condExpr, diags);
+            }
+
+            var questionMark = Peek();
+            if (questionMark.Type != TokenType.TokenQuestion)
+            {
+                return (condExpr, diags);
+            }
+
+            Read(); // eat question mark
+
+            var (trueExpr, trueDiags) = ParseExpression();
+            diags = diags.Append(trueDiags);
+            if (Recovery && trueDiags.HasErrors)
+            {
+                return (condExpr, diags);
+            }
+
+            var colon = Peek();
+            if (colon.Type != TokenType.TokenColon)
+            {
+                diags = diags.Append(new Diagnostic(
+                    severity: DiagnosticSeverity.Error,
+                    summary: "Missing false expression in conditional",
+                    detail: "The conditional operator (...?...:...) requires a false expression, delimited by a colon.",
+                    subject: colon.Range,
+                    context: Range.Between(startRange, colon.Range)));
+                return (condExpr, diags);
+            }
+
+            Read(); // eat colon
+            
+            var (falseExpr, falseDiags) = ParseExpression();
+            diags = diags.Append(falseDiags);
+            if (Recovery && falseDiags.HasErrors)
+            {
+                return (condExpr, diags);
+            }
+
+            return (new ConditionalExpression(
+                condition: condExpr,
+                trueResult: trueExpr,
+                falseResult: falseExpr,
+                srcRange: Range.Between(startRange, falseExpr.Range)),
+                    diags);
+        }
+
+        /// <summary>
+        /// parseBinaryOps calls itself recursively to work through all of the
+        /// operator precedence groups, and then eventually calls parseExpressionTerm
+        /// for each operand.
+        /// </summary>
+        /// <param name="binaryOps"></param>
+        /// <returns></returns>
+        /// <exception cref="NotImplementedException"></exception>
+        private (Expression, Diagnostics) ParseBinaryOps(IReadOnlyDictionary<TokenType, Operation>[] ops)
+        {
+            if (ops.Length == 0)
+            {
+                // We've run out of operators, so now we'll just try to parse a term.
+                return ParseExpressionWithTraversals();
+            }
+
+            var thisLevel = ops.First();
+            var remaining = ops.Skip(1).ToArray();
+            var diags = Diagnostics.None;
+            Expression lhs;
+            Expression? rhs = null;
+            Diagnostics lhsDiags, rhsDiags;
+
+            // Parse a term that might be the first operand of a binary
+            // operation or it might just be a standalone term.
+            // We won't know until we've parsed it and can look ahead
+            // to see if there's an operator token for this level.
+            (lhs, lhsDiags) = ParseBinaryOps(remaining);
+            diags = diags.Append(lhsDiags);
+            if (Recovery && lhsDiags.HasErrors)
+            {
+                return (lhs, diags);
+            }
+            
+            // We'll keep eating up operators until we run out, so that operators
+            // with the same precedence will combine in a left-associative manner:
+            // a+b+c => (a+b)+c, not a+(b+c)
+            //
+            // Should we later want to have right-associative operators, a way
+            // to achieve that would be to call back up to ParseExpression here
+            // instead of iteratively parsing only the remaining operators.
+            Operation? operation = null;
+            while (true)
+            {
+                var next = Peek();
+                if (!thisLevel.TryGetValue(next.Type, out var newOp))
+                {
+                    break;
+                }
+
+                // Are we extending an expression started on the previous iteration?
+                if (operation != null)
+                {
+                    lhs = new BinaryOpExpression(
+                        lhs: lhs,
+                        op: operation,
+                        rhs: rhs!,
+                        srcRange: Range.Between(lhs.Range, rhs!.Range));
+                }
+
+                operation = newOp!;
+                Read(); // eat operator token
+                (rhs, rhsDiags) = ParseBinaryOps(remaining);
+                diags = diags.Append(rhsDiags);
+                if (Recovery && rhsDiags.HasErrors)
+                {
+                    return (lhs, diags);
+                }
+            }
+
+            if (operation == null)
+            {
+                return (lhs, diags);
+            }
+            
+            return (new BinaryOpExpression(
+                lhs: lhs,
+                op: operation,
+                rhs: rhs!,
+                srcRange: Range.Between(lhs.Range, rhs!.Range)),
+                    diags);
+            
+        }
+
+        private (Expression, Diagnostics) ParseExpressionWithTraversals()
+        {
+            var (term, diags) = ParseExpressionTerm();
+            var (ret, moreDiags) = ParseExpressionTraversals(term);
+            diags = diags.Append(moreDiags);
+            return (ret, diags);
+        }
+
+        private (Expression, Diagnostics) ParseExpressionTraversals(Expression from)
+        {
+            var diags = Diagnostics.None;
+            var ret = from;
+
+            while (true)
+            {
+                var next = Peek();
+                switch (next.Type)
+                {
+                    case TokenType.TokenDot:
+                        // Attribute access or splat
+                        var dot = Read();
+                        var attrToken = Peek();
+
+                        switch (attrToken.Type)
+                        {
+                            case TokenType.TokenIdent:
+                                attrToken = Read();
+                                var name = attrToken.String;
+                                var range = Range.Between(dot.Range, attrToken.Range);
+                                var step = new TraverseAttr(name, range);
+                                ret = ret.MakeRelativeTraversal(step, range);
+                                break;
+                        }
+                }
+            }
+            
+            ParseExpressionTraversalsLoopEnd:
+            return (ret, diags);
+        }
+
+        private (Expression, Diagnostics) ParseExpressionTerm()
+        {
+            throw new NotImplementedException();
         }
 
         private (string, Range, Diagnostics) ParseQuotedStringLiteral()

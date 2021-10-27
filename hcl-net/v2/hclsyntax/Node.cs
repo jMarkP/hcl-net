@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using cty_net;
+using cty_net.convert;
 
 namespace hcl_net.v2.hclsyntax
 {
@@ -23,7 +24,7 @@ namespace hcl_net.v2.hclsyntax
         }
         
         public Range Range { get; }
-        public abstract void WalkChildNodes(InternalWalkFunc func);
+        public abstract void WalkChildNodes(InternalWalkFunc walker);
 
         public abstract (Value, Diagnostics) Value(EvalContext ctx);
 
@@ -38,6 +39,14 @@ namespace hcl_net.v2.hclsyntax
         public virtual Range StartRange { get; }
     }
 
+    internal static class ExpressionExtensions
+    {
+        public static Expression MakeRelativeTraversal(this Expression expr, ITraverser next, Range rng)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
     internal class VariablesWalker : IWalker
     {
         private Action<Traversal> _callback;
@@ -48,7 +57,7 @@ namespace hcl_net.v2.hclsyntax
             _callback = callback;
         }
 
-        public IEnumerable<Diagnostic>? Enter(INode node)
+        public IEnumerable<Diagnostic> Enter(INode node)
         {
             if (node is ScopeTraversalExpression scopeTraversal)
             {
@@ -61,7 +70,7 @@ namespace hcl_net.v2.hclsyntax
                 var name = t.RootName;
                 if (_localScopes.Any(s => s.ContainsKey(name)))
                 {
-                    return null;
+                    return Diagnostics.None;
                 }
 
                 _callback(t);
@@ -71,17 +80,17 @@ namespace hcl_net.v2.hclsyntax
                 _localScopes.Add(childScope.LocalNames);
             }
 
-            return null;
+            return Diagnostics.None;
         }
 
-        public IEnumerable<Diagnostic>? Exit(INode node)
+        public IEnumerable<Diagnostic> Exit(INode node)
         {
-            if (node is ChildScope childScope)
+            if (node is ChildScope)
             {
                 _localScopes.RemoveAt(_localScopes.Count - 1);
             }
 
-            return null;
+            return Diagnostics.None;
         }
     }
 
@@ -178,8 +187,73 @@ namespace hcl_net.v2.hclsyntax
 
         public override (Value, Diagnostics) Value(EvalContext ctx)
         {
-            return (Val, null);
+            return (Val, Diagnostics.None);
         }
+    }
+
+    internal class ConditionalExpression : Expression
+    {
+        public ConditionalExpression(Expression condition, Expression trueResult, Expression falseResult, Range srcRange) : base(srcRange)
+        {
+            Condition = condition;
+            TrueResult = trueResult;
+            FalseResult = falseResult;
+            SrcRange = srcRange;
+        }
+
+        public Expression Condition { get; }
+        public Expression TrueResult { get; }
+        public Expression FalseResult { get; }
+        
+        public Range SrcRange { get; }
+
+        public override Range StartRange => Condition.StartRange;
+        public override void WalkChildNodes(InternalWalkFunc walker)
+        {
+            walker(Condition);
+            walker(TrueResult);
+            walker(FalseResult);
+        }
+
+        public override (Value, Diagnostics) Value(EvalContext ctx)
+        {
+            var (trueResult, trueDiags) = TrueResult.Value(ctx);
+            var (falseResult, falseDiags) = FalseResult.Value(ctx);
+            var diags = Diagnostics.None;
+
+            var resultType = DynamicPseudoType.Instance;
+            var convs = new List<Conversion>();
+
+            throw new NotImplementedException();
+        }
+    }
+
+    internal class BinaryOpExpression : Expression
+    {
+        public BinaryOpExpression(Expression lhs, Operation op, Expression rhs, Range srcRange) : base(srcRange)
+        {
+            LHS = lhs;
+            Op = op;
+            RHS = rhs;
+            SrcRange = srcRange;
+        }
+
+        public Expression LHS { get; }
+        public Operation Op { get; }
+        public Expression RHS { get; }
+        public Range SrcRange { get; }
+        public override void WalkChildNodes(InternalWalkFunc walker)
+        {
+            walker(LHS);
+            walker(RHS);
+        }
+
+        public override (Value, Diagnostics) Value(EvalContext ctx)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override Range StartRange => LHS.StartRange;
     }
 
     internal static class NodeWalkerExtensions
@@ -199,7 +273,7 @@ namespace hcl_net.v2.hclsyntax
 
     internal interface IWalker
     {
-        IEnumerable<Diagnostic>? Enter(INode node);
-        IEnumerable<Diagnostic>? Exit(INode node);
+        IEnumerable<Diagnostic> Enter(INode node);
+        IEnumerable<Diagnostic> Exit(INode node);
     }
 }
